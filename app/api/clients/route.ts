@@ -1,6 +1,5 @@
 import { requireAdmin } from "@/lib/auth"
 import { createAdminClient } from "@/lib/supabase/admin"
-import { buildCredentialsMessage, sendWhatsAppText } from "@/lib/whatsapp"
 import { NextResponse } from "next/server"
 
 function generateUserCode(): string {
@@ -98,13 +97,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  const whatsappResult = await sendWhatsAppText({
-    to: normalizedPhone,
-    body: buildCredentialsMessage({ email, phone: normalizedPhone }),
-  })
-
   return NextResponse.json(
-    { client, warning: !whatsappResult.ok ? whatsappResult.error : undefined },
+    { client },
     { status: 201 },
   )
 }

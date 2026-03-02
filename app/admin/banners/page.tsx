@@ -5,13 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Loader2, Pencil, Trash2, Upload } from "lucide-react"
 import Image from "next/image"
@@ -19,7 +12,7 @@ import { useState } from "react"
 import useSWR from "swr"
 
 const fetcher = (url: string) => fetch(url).then((response) => response.json())
-const BUSINESS_WHATSAPP_URL = "https://wa.me/3242773556"
+const WHATSAPP_CHAT_URL = "https://wa.me/573242773556"
 
 type Banner = {
   id: string
@@ -40,8 +33,7 @@ export default function BannersPage() {
   const [editing, setEditing] = useState<Banner | null>(null)
   const [mediaUrl, setMediaUrl] = useState("")
   const [mediaType, setMediaType] = useState<"image" | "video">("image")
-  const [redirectType, setRedirectType] = useState<"url" | "whatsapp">("whatsapp")
-  const [redirectUrl, setRedirectUrl] = useState(BUSINESS_WHATSAPP_URL)
+  const [redirectUrl, setRedirectUrl] = useState("")
   const [isActive, setIsActive] = useState(true)
   const [sortOrder, setSortOrder] = useState("0")
   const [uploading, setUploading] = useState(false)
@@ -52,8 +44,7 @@ export default function BannersPage() {
     setEditing(null)
     setMediaUrl("")
     setMediaType("image")
-    setRedirectType("whatsapp")
-    setRedirectUrl(BUSINESS_WHATSAPP_URL)
+    setRedirectUrl("")
     setIsActive(true)
     setSortOrder("0")
     setError("")
@@ -89,8 +80,8 @@ export default function BannersPage() {
     const payload = {
       media_url: mediaUrl,
       media_type: mediaType,
-      redirect_type: redirectType,
-      redirect_url: redirectType === "whatsapp" ? BUSINESS_WHATSAPP_URL : redirectUrl.trim() || null,
+      redirect_type: "url" as const,
+      redirect_url: redirectUrl.trim() || null,
       is_active: isActive,
       sort_order: Number(sortOrder) || 0,
     }
@@ -122,8 +113,7 @@ export default function BannersPage() {
     setEditing(banner)
     setMediaUrl(banner.media_url)
     setMediaType(banner.media_type)
-    setRedirectType(banner.redirect_type)
-    setRedirectUrl(banner.redirect_url || BUSINESS_WHATSAPP_URL)
+    setRedirectUrl(banner.redirect_url || "")
     setIsActive(banner.is_active)
     setSortOrder(String(banner.sort_order || 0))
     setError("")
@@ -143,6 +133,10 @@ export default function BannersPage() {
       body: JSON.stringify({ is_active: value }),
     })
     if (response.ok) mutate()
+  }
+
+  const prefillWhatsApp = () => {
+    setRedirectUrl(WHATSAPP_CHAT_URL)
   }
 
   return (
@@ -176,31 +170,23 @@ export default function BannersPage() {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label>Tipo de redireccion</Label>
-                <Select
-                  value={redirectType}
-                  onValueChange={(value: "url" | "whatsapp") => setRedirectType(value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona redireccion" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="whatsapp">WhatsApp Business</SelectItem>
-                    <SelectItem value="url">URL personalizada</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="url">URL de destino</Label>
-                <Input
-                  id="url"
-                  value={redirectType === "whatsapp" ? BUSINESS_WHATSAPP_URL : redirectUrl}
-                  disabled={redirectType === "whatsapp"}
-                  onChange={(event) => setRedirectUrl(event.target.value)}
-                  placeholder="https://..."
-                />
+              <div className="space-y-2 lg:col-span-2">
+                <Label htmlFor="url">URL de destino (al hacer click en el banner)</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="url"
+                    value={redirectUrl}
+                    onChange={(event) => setRedirectUrl(event.target.value)}
+                    placeholder="https://..."
+                    className="flex-1"
+                  />
+                  <Button type="button" variant="outline" size="sm" onClick={prefillWhatsApp}>
+                    WhatsApp
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Usa el boton WhatsApp para redirigir al chat de Sandeli.
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -287,11 +273,8 @@ export default function BannersPage() {
                     <p className="text-sm font-semibold text-foreground">
                       {banner.media_type === "image" ? "Imagen" : "Video"} · Orden {banner.sort_order}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      Redireccion:{" "}
-                      {banner.redirect_type === "whatsapp"
-                        ? "WhatsApp Business"
-                        : banner.redirect_url || "Sin URL"}
+                    <p className="truncate text-xs text-muted-foreground">
+                      Destino: {banner.redirect_url || "Sin URL"}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">

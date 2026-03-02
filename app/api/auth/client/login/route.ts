@@ -1,9 +1,10 @@
 import { createAdminClient } from "@/lib/supabase/admin"
-import { buildVerificationMessage, sendWhatsAppText } from "@/lib/whatsapp"
 import { NextResponse } from "next/server"
+import { cookies } from "next/headers"
+import bcrypt from "bcryptjs"
 
 export async function POST(request: Request) {
-  const { identifier } = await request.json()
+  const { identifier, password, newPassword } = await request.json()
   if (!identifier || typeof identifier !== "string") {
     return NextResponse.json(
       { error: "Debes enviar un correo o telefono valido." },
@@ -24,40 +25,89 @@ export async function POST(request: Request) {
   if (error || !client) {
     return NextResponse.json(
       { error: "No se encontro una cuenta con esas credenciales." },
-      { status: 404 }
+      { status: 404 },
     )
   }
 
-  // Generate 6-digit code
-  const code = Math.floor(100000 + Math.random() * 900000).toString()
-  const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString()
+  // Case 1: Client has no password yet -> prompt to create one
+  if (!client.has_password) {
+    // If newPassword is provided, set it
+    if (newPassword) {
+      const passwordHash = await bcrypt.hash(newPassword, 10)
+      await supabase
+        .from("clients")
+        .update({
+          password_hash: passwordHash,
+          password_plain: newPassword,
+          has_password: true,
+        })
+        .eq("id", client.id)
 
-  // Save verification code
-  await supabase.from("verification_codes").insert({
-    client_id: client.id,
-    code,
-    expires_at: expiresAt,
-  })
+      // Set session cookie
+      const cookieStore = await cookies()
+      cookieStore.set("sandeli_client_id", client.id, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 30,
+        path: "/",
+      })
 
-  const whatsappResult = await sendWhatsAppText({
-    to: client.phone,
-    body: buildVerificationMessage(code),
-  })
+      // Return full client data
+      const { data: updatedClient } = await supabase
+        .from("clients")
+        .select("*")
+        .eq("id", client.id)
+        .single()
 
-  if (!whatsappResult.ok && process.env.NODE_ENV === "production") {
+      return NextResponse.json({
+        success: true,
+        step: "authenticated",
+        client: updatedClient,
+      })
+    }
+
+    // No password provided yet -> tell frontend to show password creation form
+    return NextResponse.json({
+      success: true,
+      step: "create_password",
+      clientId: client.id,
+      clientName: client.full_name,
+    })
+  }
+
+  // Case 2: Client has password -> require it
+  if (!password) {
+    return NextResponse.json({
+      success: true,
+      step: "enter_password",
+      clientId: client.id,
+      clientName: client.full_name,
+    })
+  }
+
+  // Verify password
+  const isValid = await bcrypt.compare(password, client.password_hash!)
+  if (!isValid) {
     return NextResponse.json(
-      { error: whatsappResult.error || "No se pudo enviar el codigo por WhatsApp." },
-      { status: 500 },
+      { error: "Contrasena incorrecta." },
+      { status: 401 },
     )
   }
+
+  // Set session cookie
+  const cookieStore = await cookies()
+  cookieStore.set("sandeli_client_id", client.id, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 30,
+    path: "/",
+  })
 
   return NextResponse.json({
     success: true,
-    clientId: client.id,
-    clientName: client.full_name,
-    phone: client.phone,
-    warning: !whatsappResult.ok ? whatsappResult.error : undefined,
-    // In development, include code for testing
-    ...(process.env.NODE_ENV === "development" ? { code } : {}),
+    step: "authenticated",
+    client,
   })
 }

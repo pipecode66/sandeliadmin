@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator"
 import { useParams } from "next/navigation"
 import { useMemo, useState } from "react"
 import useSWR from "swr"
-import { CheckCircle2, Copy, Loader2, ShieldCheck, XCircle } from "lucide-react"
+import { CheckCircle2, Copy, Eye, EyeOff, Loader2, ShieldCheck, XCircle } from "lucide-react"
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
@@ -25,6 +25,8 @@ type ClientPayload = {
     redeemed_today: number
     last_redeem_date: string | null
     user_code: string
+    password_plain: string | null
+    has_password: boolean
     created_at: string
   }
   invoices: {
@@ -53,6 +55,7 @@ export default function ClientDetailPage() {
   const [feedback, setFeedback] = useState<{ type: "ok" | "error"; message: string } | null>(
     null,
   )
+  const [showPassword, setShowPassword] = useState(false)
 
   const { data, isLoading, mutate } = useSWR<ClientPayload>(
     clientId ? `/api/clients/${clientId}` : null,
@@ -160,6 +163,25 @@ export default function ClientDetailPage() {
                   <div>
                     <p className="text-xs uppercase text-muted-foreground">Sexo</p>
                     <p className="text-sm text-foreground">{data.client.gender}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase text-muted-foreground">Contrasena</p>
+                    {data.client.has_password && data.client.password_plain ? (
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-foreground">
+                          {showPassword ? data.client.password_plain : "••••••••"}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-sm italic text-muted-foreground">Sin contrasena asignada</p>
+                    )}
                   </div>
                 </CardContent>
               </Card>

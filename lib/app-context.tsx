@@ -51,15 +51,7 @@ export interface HomeBanner {
   sortOrder: number
 }
 
-export interface PendingLoginState {
-  mode: "email" | "phone"
-  identifier: string
-  displayValue: string
-  clientId: string
-  debugCode?: string
-}
-
-type AppScreen = "login" | "verification" | "avatar-setup" | "welcome" | "main"
+type AppScreen = "login" | "avatar-setup" | "welcome" | "main"
 type MainTab = "home" | "history" | "redeemables"
 
 interface AppState {
@@ -71,8 +63,6 @@ interface AppState {
   products: RedeemableProduct[]
   banners: HomeBanner[]
   showIOSTutorial: boolean
-  pendingLogin: PendingLoginState | null
-  setPendingLogin: (login: PendingLoginState | null) => void
   setScreen: (screen: AppScreen) => void
   setMainTab: (tab: MainTab) => void
   setUser: (user: UserProfile | null) => void
@@ -199,7 +189,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [products, setProducts] = useState<RedeemableProduct[]>([])
   const [banners, setBanners] = useState<HomeBanner[]>([])
   const [showIOSTutorial, setShowIOSTutorial] = useState(false)
-  const [pendingLogin, setPendingLogin] = useState<PendingLoginState | null>(null)
 
   const hydrateClientSession = useCallback(async () => {
     const me = await fetchJson<{ client?: Record<string, unknown> }>("/api/auth/client/me")
@@ -331,7 +320,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     fetch("/api/auth/client/logout", { method: "POST" }).catch(() => undefined)
     setUserState(null)
     setPurchases([])
-    setPendingLogin(null)
     setScreen("login")
     setMainTab("home")
   }, [])
@@ -346,8 +334,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       products,
       banners,
       showIOSTutorial,
-      pendingLogin,
-      setPendingLogin,
       setScreen,
       setMainTab,
       setUser,
@@ -365,7 +351,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       mainTab,
       markNotificationRead,
       notifications,
-      pendingLogin,
       products,
       purchases,
       redeemProduct,

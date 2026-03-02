@@ -14,7 +14,7 @@ const AVATAR_ICONS: Record<string, string> = {
   a6: "🥤",
 }
 
-const DEFAULT_WHATSAPP_URL = "https://wa.me/3242773556"
+const DEFAULT_WHATSAPP_URL = "https://wa.me/573242773556"
 
 export function HomeTab() {
   const { user, products, banners, setMainTab, logout } = useApp()

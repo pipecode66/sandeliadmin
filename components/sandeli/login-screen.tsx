@@ -3,11 +3,10 @@
 import { useState } from "react"
 import Image from "next/image"
 import { useApp } from "@/lib/app-context"
-import { Mail, Phone, ArrowRight, Loader2 } from "lucide-react"
+import { Mail, Phone, ArrowRight, Loader2, Lock, Eye, EyeOff } from "lucide-react"
 import { CountryCodeSelector } from "./country-code-selector"
 import { countryCodes, type CountryCode } from "@/lib/country-codes"
 
-const WHATSAPP_SENDER = "3242773556"
 const defaultCountry = countryCodes.find((country) => country.code === "CO")!
 
 function normalizePhone(input: string, dialCode: string) {
@@ -17,18 +16,32 @@ function normalizePhone(input: string, dialCode: string) {
   return `${dialDigits}${digits}`
 }
 
+const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{6,}$/
+
+type LoginStep = "identifier" | "enter_password" | "create_password"
+
 export function LoginScreen() {
-  const { setScreen, setPendingLogin } = useApp()
+  const { setScreen, refreshData } = useApp()
   const [mode, setMode] = useState<"email" | "phone">("phone")
   const [value, setValue] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [selectedCountry, setSelectedCountry] = useState<CountryCode>(defaultCountry)
 
+  // Password state
+  const [step, setStep] = useState<LoginStep>("identifier")
+  const [identifier, setIdentifier] = useState("")
+  const [clientName, setClientName] = useState("")
+  const [clientId, setClientId] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
   const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
   const isValidPhone = (phone: string) => /^\d{7,15}$/.test(phone)
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleIdentifierSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     setError("")
 
@@ -38,8 +51,7 @@ export function LoginScreen() {
       return
     }
 
-    let identifier = trimmed
-    let displayValue = trimmed
+    let currentIdentifier = trimmed
 
     if (mode === "email") {
       const normalizedEmail = trimmed.toLowerCase()
@@ -47,16 +59,14 @@ export function LoginScreen() {
         setError("Ingresa un correo electronico valido.")
         return
       }
-      identifier = normalizedEmail
-      displayValue = normalizedEmail
+      currentIdentifier = normalizedEmail
     } else {
       const normalizedPhone = normalizePhone(trimmed, selectedCountry.dial)
       if (!isValidPhone(normalizedPhone)) {
         setError("Ingresa un numero telefonico valido.")
         return
       }
-      identifier = normalizedPhone
-      displayValue = `+${normalizedPhone}`
+      currentIdentifier = normalizedPhone
     }
 
     setLoading(true)
@@ -64,28 +74,114 @@ export function LoginScreen() {
       const response = await fetch("/api/auth/client/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier }),
+        body: JSON.stringify({ identifier: currentIdentifier }),
       })
       const result = await response.json()
 
       if (!response.ok) {
-        setError(result.error || "No se pudo iniciar el proceso de verificacion.")
+        setError(result.error || "No se pudo iniciar sesion.")
         return
       }
 
-      setPendingLogin({
-        mode,
-        identifier,
-        displayValue,
-        clientId: result.clientId,
-        debugCode: result.code,
-      })
-      setScreen("verification")
+      setIdentifier(currentIdentifier)
+      setClientName(result.clientName || "")
+      setClientId(result.clientId || "")
+
+      if (result.step === "create_password") {
+        setStep("create_password")
+      } else if (result.step === "enter_password") {
+        setStep("enter_password")
+      } else if (result.step === "authenticated") {
+        await refreshData()
+      }
     } catch {
       setError("Error de conexion. Intenta de nuevo.")
     } finally {
       setLoading(false)
     }
+  }
+
+  const handlePasswordSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    setError("")
+
+    if (!password) {
+      setError("Ingresa tu contrasena.")
+      return
+    }
+
+    setLoading(true)
+    try {
+      const response = await fetch("/api/auth/client/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier, password }),
+      })
+      const result = await response.json()
+
+      if (!response.ok) {
+        setError(result.error || "Contrasena incorrecta.")
+        return
+      }
+
+      if (result.step === "authenticated") {
+        await refreshData()
+      }
+    } catch {
+      setError("Error de conexion. Intenta de nuevo.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCreatePasswordSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    setError("")
+
+    if (!password) {
+      setError("Ingresa una contrasena.")
+      return
+    }
+
+    if (!PASSWORD_REGEX.test(password)) {
+      setError("Minimo 6 caracteres, una mayuscula, un numero y un caracter especial.")
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setError("Las contrasenas no coinciden.")
+      return
+    }
+
+    setLoading(true)
+    try {
+      const response = await fetch("/api/auth/client/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier, newPassword: password }),
+      })
+      const result = await response.json()
+
+      if (!response.ok) {
+        setError(result.error || "No se pudo crear la contrasena.")
+        return
+      }
+
+      if (result.step === "authenticated") {
+        await refreshData()
+      }
+    } catch {
+      setError("Error de conexion. Intenta de nuevo.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleBack = () => {
+    setStep("identifier")
+    setPassword("")
+    setConfirmPassword("")
+    setError("")
   }
 
   return (
@@ -113,107 +209,274 @@ export function LoginScreen() {
       </div>
 
       <div className="safe-bottom rounded-t-3xl bg-secondary px-6 pb-10 pt-8">
-        <h2 className="mb-1 text-xl font-semibold text-foreground">Iniciar sesion</h2>
-        <p className="mb-6 text-sm text-muted-foreground">
-          Ingresa tu telefono o correo registrado
-        </p>
+        {step === "identifier" && (
+          <>
+            <h2 className="mb-1 text-xl font-semibold text-foreground">Iniciar sesion</h2>
+            <p className="mb-6 text-sm text-muted-foreground">
+              Ingresa tu telefono o correo registrado
+            </p>
 
-        <div className="mb-5 flex rounded-xl bg-background p-1">
-          <button
-            type="button"
-            onClick={() => {
-              setMode("phone")
-              setValue("")
-              setError("")
-            }}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all ${
-              mode === "phone"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground"
-            }`}
-          >
-            <Phone className="h-4 w-4" />
-            Telefono
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setMode("email")
-              setValue("")
-              setError("")
-            }}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all ${
-              mode === "email"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground"
-            }`}
-          >
-            <Mail className="h-4 w-4" />
-            Correo
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          {mode === "phone" ? (
-            <div className="mb-4 flex">
-              <CountryCodeSelector selected={selectedCountry} onSelect={setSelectedCountry} />
-              <input
-                type="tel"
-                value={value}
-                onChange={(event) => {
-                  setValue(event.target.value.replace(/[^\d\s]/g, ""))
+            <div className="mb-5 flex rounded-xl bg-background p-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("phone")
+                  setValue("")
                   setError("")
                 }}
-                placeholder="300 000 0000"
-                className="w-full min-w-0 rounded-r-xl border border-border bg-background py-3.5 pl-4 pr-4 text-foreground placeholder:text-muted-foreground/60 transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                autoComplete="tel"
-                inputMode="tel"
-              />
+                className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all ${
+                  mode === "phone"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground"
+                }`}
+              >
+                <Phone className="h-4 w-4" />
+                Telefono
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("email")
+                  setValue("")
+                  setError("")
+                }}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all ${
+                  mode === "email"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground"
+                }`}
+              >
+                <Mail className="h-4 w-4" />
+                Correo
+              </button>
             </div>
-          ) : (
-            <div className="relative mb-4">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                <Mail className="h-5 w-5 text-muted-foreground" />
+
+            <form onSubmit={handleIdentifierSubmit}>
+              {mode === "phone" ? (
+                <div className="mb-4 flex">
+                  <CountryCodeSelector selected={selectedCountry} onSelect={setSelectedCountry} />
+                  <input
+                    type="tel"
+                    value={value}
+                    onChange={(event) => {
+                      setValue(event.target.value.replace(/[^\d\s]/g, ""))
+                      setError("")
+                    }}
+                    placeholder="300 000 0000"
+                    className="w-full min-w-0 rounded-r-xl border border-border bg-background py-3.5 pl-4 pr-4 text-foreground placeholder:text-muted-foreground/60 transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    autoComplete="tel"
+                    inputMode="tel"
+                  />
+                </div>
+              ) : (
+                <div className="relative mb-4">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                    <Mail className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <input
+                    type="email"
+                    value={value}
+                    onChange={(event) => {
+                      setValue(event.target.value)
+                      setError("")
+                    }}
+                    placeholder="tu@correo.com"
+                    className="w-full rounded-xl border border-border bg-background py-3.5 pl-12 pr-4 text-foreground placeholder:text-muted-foreground/60 transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    autoComplete="email"
+                    inputMode="email"
+                  />
+                </div>
+              )}
+
+              {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
+
+              <button
+                type="submit"
+                disabled={loading || !value.trim()}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:bg-primary/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>Verificando...</span>
+                  </>
+                ) : (
+                  <>
+                    Continuar
+                    <ArrowRight className="h-5 w-5" />
+                  </>
+                )}
+              </button>
+            </form>
+          </>
+        )}
+
+        {step === "enter_password" && (
+          <>
+            <button
+              type="button"
+              onClick={handleBack}
+              className="mb-4 text-sm font-medium text-primary transition-all active:scale-95"
+            >
+              {"<"} Volver
+            </button>
+            <h2 className="mb-1 text-xl font-semibold text-foreground">
+              Hola, {clientName}
+            </h2>
+            <p className="mb-6 text-sm text-muted-foreground">
+              Ingresa tu contrasena para continuar
+            </p>
+
+            <form onSubmit={handlePasswordSubmit}>
+              <div className="relative mb-4">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                  <Lock className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(event) => {
+                    setPassword(event.target.value)
+                    setError("")
+                  }}
+                  placeholder="Tu contrasena"
+                  className="w-full rounded-xl border border-border bg-background py-3.5 pl-12 pr-12 text-foreground placeholder:text-muted-foreground/60 transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-4"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </button>
               </div>
-              <input
-                type="email"
-                value={value}
-                onChange={(event) => {
-                  setValue(event.target.value)
-                  setError("")
-                }}
-                placeholder="tu@correo.com"
-                className="w-full rounded-xl border border-border bg-background py-3.5 pl-12 pr-4 text-foreground placeholder:text-muted-foreground/60 transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                autoComplete="email"
-                inputMode="email"
-              />
-            </div>
-          )}
 
-          {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
+              {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
 
-          <button
-            type="submit"
-            disabled={loading || !value.trim()}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:bg-primary/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin" />
-                <span>Enviando codigo...</span>
-              </>
-            ) : (
-              <>
-                Continuar
-                <ArrowRight className="h-5 w-5" />
-              </>
-            )}
-          </button>
-        </form>
+              <button
+                type="submit"
+                disabled={loading || !password}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:bg-primary/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>Iniciando sesion...</span>
+                  </>
+                ) : (
+                  <>
+                    Iniciar sesion
+                    <ArrowRight className="h-5 w-5" />
+                  </>
+                )}
+              </button>
+            </form>
+          </>
+        )}
 
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          Se enviara un codigo por WhatsApp desde el numero {WHATSAPP_SENDER}
-        </p>
+        {step === "create_password" && (
+          <>
+            <button
+              type="button"
+              onClick={handleBack}
+              className="mb-4 text-sm font-medium text-primary transition-all active:scale-95"
+            >
+              {"<"} Volver
+            </button>
+            <h2 className="mb-1 text-xl font-semibold text-foreground">
+              Crea tu contrasena
+            </h2>
+            <p className="mb-2 text-sm text-muted-foreground">
+              Hola {clientName}, es tu primer inicio de sesion. Crea una contrasena segura.
+            </p>
+            <p className="mb-6 text-xs text-muted-foreground">
+              Minimo 6 caracteres, una mayuscula, un numero y un caracter especial.
+            </p>
+
+            <form onSubmit={handleCreatePasswordSubmit}>
+              <div className="relative mb-4">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                  <Lock className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(event) => {
+                    setPassword(event.target.value)
+                    setError("")
+                  }}
+                  placeholder="Nueva contrasena"
+                  className="w-full rounded-xl border border-border bg-background py-3.5 pl-12 pr-12 text-foreground placeholder:text-muted-foreground/60 transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-4"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </button>
+              </div>
+
+              <div className="relative mb-4">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                  <Lock className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(event) => {
+                    setConfirmPassword(event.target.value)
+                    setError("")
+                  }}
+                  placeholder="Confirmar contrasena"
+                  className="w-full rounded-xl border border-border bg-background py-3.5 pl-12 pr-12 text-foreground placeholder:text-muted-foreground/60 transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-4"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-5 w-5 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </button>
+              </div>
+
+              {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
+
+              <button
+                type="submit"
+                disabled={loading || !password || !confirmPassword}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:bg-primary/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>Creando contrasena...</span>
+                  </>
+                ) : (
+                  <>
+                    Crear contrasena y entrar
+                    <ArrowRight className="h-5 w-5" />
+                  </>
+                )}
+              </button>
+            </form>
+          </>
+        )}
       </div>
     </div>
   )
