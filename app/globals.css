@@ -1,0 +1,104 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: #ffffff;
+  --foreground: #1a1b1d;
+  --card: #ffffff;
+  --card-foreground: #1a1b1d;
+  --popover: #ffffff;
+  --popover-foreground: #1a1b1d;
+  --primary: #9f1fee;
+  --primary-foreground: #ffffff;
+  --secondary: #f5f3f2;
+  --secondary-foreground: #1a1b1d;
+  --muted: #dcd7d4;
+  --muted-foreground: #898989;
+  --accent: #9f93e7;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e5e0dd;
+  --input: #e5e0dd;
+  --ring: #9f1fee;
+  --chart-1: #a41c82;
+  --chart-2: #9f1fee;
+  --chart-3: #9f93e7;
+  --chart-4: #dcd7d4;
+  --chart-5: #898989;
+  --radius: 0.75rem;
+
+  --sandeli-magenta: #a41c82;
+  --sandeli-purple: #9f1fee;
+  --sandeli-lavender: #9f93e7;
+  --sandeli-beige: #dcd7d4;
+  --sandeli-gray: #898989;
+  --sandeli-dark: #1a1b1d;
+}
+
+@theme inline {
+  --font-sans: 'DM Sans', 'DM Sans Fallback', sans-serif;
+  --font-serif: 'Playfair Display', 'Playfair Display Fallback', serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-sandeli-magenta: var(--sandeli-magenta);
+  --color-sandeli-purple: var(--sandeli-purple);
+  --color-sandeli-lavender: var(--sandeli-lavender);
+  --color-sandeli-beige: var(--sandeli-beige);
+  --color-sandeli-gray: var(--sandeli-gray);
+  --color-sandeli-dark: var(--sandeli-dark);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Mobile-first app styles */
+html, body {
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Safe area support for notch devices */
+@supports (padding: env(safe-area-inset-top)) {
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
