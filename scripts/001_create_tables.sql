@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS banners (
   title TEXT,
   media_url TEXT NOT NULL,
   media_type TEXT NOT NULL CHECK (media_type IN ('image', 'video')),
-  redirect_type TEXT NOT NULL CHECK (redirect_type IN ('url', 'whatsapp')),
+  redirect_type TEXT NOT NULL CHECK (redirect_type IN ('url')),
   redirect_url TEXT,
   is_active BOOLEAN DEFAULT true,
   sort_order INTEGER DEFAULT 0,

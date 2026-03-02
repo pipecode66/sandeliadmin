@@ -14,8 +14,6 @@ const AVATAR_ICONS: Record<string, string> = {
   a6: "🥤",
 }
 
-const DEFAULT_WHATSAPP_URL = "https://wa.me/3242773556"
-
 export function HomeTab() {
   const { user, products, banners, setMainTab, logout } = useApp()
   const [copied, setCopied] = useState(false)
@@ -54,10 +52,7 @@ export function HomeTab() {
       {banners.length > 0 && (
         <div className="mb-5 flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
           {banners.map((banner) => {
-            const targetUrl =
-              banner.redirectType === "whatsapp"
-                ? banner.redirectUrl || DEFAULT_WHATSAPP_URL
-                : banner.redirectUrl
+            const targetUrl = banner.redirectUrl
             return (
               <button
                 key={banner.id}

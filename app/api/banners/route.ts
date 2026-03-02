@@ -34,10 +34,18 @@ export async function POST(request: Request) {
 
   const body = await request.json()
   const supabase = createAdminClient()
+  const payload = {
+    media_url: body.media_url,
+    media_type: body.media_type,
+    redirect_type: "url" as const,
+    redirect_url: body.redirect_url || null,
+    is_active: body.is_active ?? true,
+    sort_order: body.sort_order ?? 0,
+  }
 
   const { data, error } = await supabase
     .from("banners")
-    .insert(body)
+    .insert(payload)
     .select()
     .single()
 

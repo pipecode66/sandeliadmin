@@ -46,7 +46,7 @@ export interface HomeBanner {
   id: string
   mediaUrl: string
   mediaType: "image" | "video"
-  redirectType: "url" | "whatsapp"
+  redirectType: "url"
   redirectUrl: string | null
   sortOrder: number
 }
@@ -162,7 +162,7 @@ function mapBanners(items: Record<string, unknown>[]): HomeBanner[] {
     id: String(item.id),
     mediaUrl: String(item.media_url || ""),
     mediaType: (item.media_type as "image" | "video") || "image",
-    redirectType: (item.redirect_type as "url" | "whatsapp") || "url",
+    redirectType: "url",
     redirectUrl: item.redirect_url ? String(item.redirect_url) : null,
     sortOrder: Number(item.sort_order || 0),
   }))

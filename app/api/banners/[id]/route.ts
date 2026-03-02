@@ -12,10 +12,18 @@ export async function PATCH(
   const { id } = await params
   const body = await request.json()
   const supabase = createAdminClient()
+  const payload: Record<string, unknown> = {}
+
+  if (body.media_url !== undefined) payload.media_url = body.media_url
+  if (body.media_type !== undefined) payload.media_type = body.media_type
+  if (body.redirect_url !== undefined) payload.redirect_url = body.redirect_url || null
+  if (body.is_active !== undefined) payload.is_active = body.is_active
+  if (body.sort_order !== undefined) payload.sort_order = body.sort_order
+  payload.redirect_type = "url"
 
   const { data, error } = await supabase
     .from("banners")
-    .update(body)
+    .update(payload)
     .eq("id", id)
     .select()
     .single()
