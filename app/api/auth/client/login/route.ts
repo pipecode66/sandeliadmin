@@ -1,9 +1,10 @@
+import { CLIENT_PUBLIC_SELECT } from "@/lib/client-fields"
 import { createAdminClient } from "@/lib/supabase/admin"
-import { buildVerificationMessage, sendWhatsAppText } from "@/lib/whatsapp"
 import { NextResponse } from "next/server"
+import { cookies } from "next/headers"
 
 export async function POST(request: Request) {
-  const { identifier } = await request.json()
+  const { identifier, password } = await request.json()
   if (!identifier || typeof identifier !== "string") {
     return NextResponse.json(
       { error: "Debes enviar un correo o telefono valido." },
@@ -14,50 +15,53 @@ export async function POST(request: Request) {
   const normalizedIdentifier = identifier.trim()
   const supabase = createAdminClient()
 
-  // Find client by email or phone
   const { data: client, error } = await supabase
     .from("clients")
-    .select("*")
+    .select("id, full_name, email, phone, password_plain, password_set")
     .or(`email.eq.${normalizedIdentifier},phone.eq.${normalizedIdentifier}`)
     .single()
 
   if (error || !client) {
     return NextResponse.json(
       { error: "No se encontro una cuenta con esas credenciales." },
-      { status: 404 }
+      { status: 404 },
     )
   }
 
-  // Generate 6-digit code
-  const code = Math.floor(100000 + Math.random() * 900000).toString()
-  const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString()
+  if (!client.password_set || !client.password_plain) {
+    return NextResponse.json({
+      success: true,
+      requiresPasswordSetup: true,
+      clientId: client.id,
+      clientName: client.full_name,
+    })
+  }
 
-  // Save verification code
-  await supabase.from("verification_codes").insert({
-    client_id: client.id,
-    code,
-    expires_at: expiresAt,
-  })
-
-  const whatsappResult = await sendWhatsAppText({
-    to: client.phone,
-    body: buildVerificationMessage(code),
-  })
-
-  if (!whatsappResult.ok && process.env.NODE_ENV === "production") {
+  if (!password || typeof password !== "string") {
     return NextResponse.json(
-      { error: whatsappResult.error || "No se pudo enviar el codigo por WhatsApp." },
-      { status: 500 },
+      { error: "Ingresa tu contraseña para continuar." },
+      { status: 400 },
     )
   }
 
-  return NextResponse.json({
-    success: true,
-    clientId: client.id,
-    clientName: client.full_name,
-    phone: client.phone,
-    warning: !whatsappResult.ok ? whatsappResult.error : undefined,
-    // In development, include code for testing
-    ...(process.env.NODE_ENV === "development" ? { code } : {}),
+  if (password !== client.password_plain) {
+    return NextResponse.json({ error: "Contraseña incorrecta." }, { status: 401 })
+  }
+
+  const cookieStore = await cookies()
+  cookieStore.set("sandeli_client_id", client.id, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 30,
+    path: "/",
   })
+
+  const { data: clientData } = await supabase
+    .from("clients")
+    .select(CLIENT_PUBLIC_SELECT)
+    .eq("id", client.id)
+    .single()
+
+  return NextResponse.json({ success: true, client: clientData })
 }

@@ -14,21 +14,14 @@ export function buildCredentialsMessage({
   return [
     "Bienvenido a Sandeli!",
     "",
-    "Tus credenciales para iniciar sesion son:",
+    "Tu cuenta fue creada desde nuestro panel administrativo.",
+    "",
+    "Credenciales de acceso:",
     `Correo: ${email}`,
     `Telefono: ${phone}`,
     "",
-    "Puedes usar cualquiera de las dos.",
-    "En cada inicio de sesion recibiras un codigo de verificacion por WhatsApp.",
-  ].join("\n")
-}
-
-export function buildVerificationMessage(code: string) {
-  return [
-    `Sandeli - Tu codigo de verificacion es: ${code}`,
-    "",
-    "Este codigo expira en 5 minutos.",
-    "No lo compartas con nadie.",
+    "En tu primer ingreso deberas crear una contraseña de 6 caracteres con mayuscula, numero y caracter especial.",
+    "Despues podras iniciar sesion con tu correo o telefono y esa contraseña.",
   ].join("\n")
 }
 

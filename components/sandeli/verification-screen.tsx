@@ -1,114 +1,59 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useState } from "react"
 import Image from "next/image"
 import { useApp } from "@/lib/app-context"
-import { ArrowLeft, Loader2, RefreshCw } from "lucide-react"
+import { ArrowLeft, Eye, EyeOff, Loader2, Lock } from "lucide-react"
 
-const WHATSAPP_SENDER = "3242773556"
+const PASSWORD_RULE =
+  "La contraseña debe tener exactamente 6 caracteres e incluir una mayuscula, un numero y un caracter especial."
+
+function isValidPassword(password: string) {
+  return /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6}$/.test(password)
+}
 
 export function VerificationScreen() {
   const { pendingLogin, setPendingLogin, setScreen, refreshData } = useApp()
-  const [digits, setDigits] = useState<string[]>(["", "", "", "", "", ""])
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-  const [resendCooldown, setResendCooldown] = useState(0)
-  const [debugCode, setDebugCode] = useState(pendingLogin?.debugCode || "")
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([])
-
-  useEffect(() => {
-    inputRefs.current[0]?.focus()
-  }, [])
-
-  useEffect(() => {
-    if (resendCooldown <= 0) return
-    const timer = setTimeout(() => setResendCooldown((value) => value - 1), 1000)
-    return () => clearTimeout(timer)
-  }, [resendCooldown])
-
-  useEffect(() => {
-    setDebugCode(pendingLogin?.debugCode || "")
-  }, [pendingLogin?.debugCode])
 
   if (!pendingLogin) return null
 
-  const handleDigitChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return
-    const nextDigits = [...digits]
-    if (value.length > 1) {
-      const pasted = value.slice(0, 6).split("")
-      for (let i = 0; i < 6; i++) nextDigits[i] = pasted[i] || ""
-      setDigits(nextDigits)
-      inputRefs.current[Math.min(pasted.length - 1, 5)]?.focus()
+  const handleSubmit = async () => {
+    if (!isValidPassword(password)) {
+      setError(PASSWORD_RULE)
       return
     }
-    nextDigits[index] = value
-    setDigits(nextDigits)
-    setError("")
-    if (value && index < 5) inputRefs.current[index + 1]?.focus()
-  }
 
-  const handleKeyDown = (index: number, event: React.KeyboardEvent) => {
-    if (event.key === "Backspace" && !digits[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus()
-    }
-  }
-
-  const handleVerify = async () => {
-    const enteredCode = digits.join("")
-    if (enteredCode.length !== 6) {
-      setError("Ingresa el codigo completo de 6 digitos.")
+    if (confirmPassword !== password) {
+      setError("Las contraseñas no coinciden.")
       return
     }
 
     setLoading(true)
     setError("")
     try {
-      const response = await fetch("/api/auth/client/verify", {
+      const response = await fetch("/api/auth/client/setup-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clientId: pendingLogin.clientId, code: enteredCode }),
+        body: JSON.stringify({
+          clientId: pendingLogin.clientId,
+          password,
+        }),
       })
       const result = await response.json()
 
       if (!response.ok) {
-        setError(result.error || "Codigo invalido o expirado.")
+        setError(result.error || "No se pudo guardar la contraseña.")
         return
       }
 
       setPendingLogin(null)
       await refreshData()
-    } catch {
-      setError("Error de conexion.")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleResend = async () => {
-    if (resendCooldown > 0) return
-    setError("")
-    setLoading(true)
-    try {
-      const response = await fetch("/api/auth/client/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier: pendingLogin.identifier }),
-      })
-      const result = await response.json()
-      if (!response.ok) {
-        setError(result.error || "No se pudo reenviar el codigo.")
-        return
-      }
-
-      setPendingLogin({
-        ...pendingLogin,
-        debugCode: result.code,
-      })
-      setDebugCode(result.code || "")
-      setDigits(["", "", "", "", "", ""])
-      setResendCooldown(60)
-      inputRefs.current[0]?.focus()
     } catch {
       setError("Error de conexion.")
     } finally {
@@ -144,61 +89,77 @@ export function VerificationScreen() {
           style={{ width: "auto", height: "auto" }}
         />
 
-        <h2 className="mb-2 text-xl font-bold text-foreground">Codigo de verificacion</h2>
-        <p className="mb-2 text-center text-sm text-muted-foreground">
-          Ingresa el codigo de 6 digitos enviado via WhatsApp
+        <h2 className="mb-2 text-center text-xl font-bold text-foreground">Crea tu contraseña</h2>
+        <p className="mb-1 text-center text-sm text-muted-foreground">
+          Primer ingreso para:
         </p>
-        <p className="mb-1 text-center text-xs text-muted-foreground">Desde: {WHATSAPP_SENDER}</p>
-        <p className="mb-8 text-center text-xs font-medium text-primary">
-          A: {pendingLogin.displayValue}
-        </p>
+        <p className="mb-6 text-center text-xs font-medium text-primary">{pendingLogin.displayValue}</p>
 
-        <div className="mb-6 flex justify-center gap-2">
-          {digits.map((digit, index) => (
-            <input
-              key={index}
-              ref={(element) => {
-                inputRefs.current[index] = element
-              }}
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
-              value={digit}
-              onChange={(event) => handleDigitChange(index, event.target.value)}
-              onKeyDown={(event) => handleKeyDown(index, event)}
-              className={`h-14 w-12 rounded-xl border-2 bg-secondary text-center text-xl font-bold text-foreground transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 ${
-                error ? "border-destructive" : "border-border"
-              }`}
-            />
-          ))}
+        <div className="mb-3 w-full rounded-xl bg-primary/5 px-3 py-2 text-xs text-primary">
+          {PASSWORD_RULE}
+        </div>
+
+        <div className="relative mb-4 w-full">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+            <Lock className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <input
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(event) => {
+              setPassword(event.target.value)
+              setError("")
+            }}
+            placeholder="Nueva contraseña"
+            className="w-full rounded-xl border border-border bg-secondary py-3.5 pl-12 pr-12 text-foreground placeholder:text-muted-foreground/60 transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            maxLength={6}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+            className="absolute inset-y-0 right-0 flex items-center pr-4 text-muted-foreground"
+            aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+          >
+            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </button>
+        </div>
+
+        <div className="relative mb-4 w-full">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+            <Lock className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <input
+            type={showConfirmPassword ? "text" : "password"}
+            value={confirmPassword}
+            onChange={(event) => {
+              setConfirmPassword(event.target.value)
+              setError("")
+            }}
+            placeholder="Confirmar contraseña"
+            className="w-full rounded-xl border border-border bg-secondary py-3.5 pl-12 pr-12 text-foreground placeholder:text-muted-foreground/60 transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            maxLength={6}
+          />
+          <button
+            type="button"
+            onClick={() => setShowConfirmPassword((prev) => !prev)}
+            className="absolute inset-y-0 right-0 flex items-center pr-4 text-muted-foreground"
+            aria-label={
+              showConfirmPassword ? "Ocultar confirmación" : "Mostrar confirmación"
+            }
+          >
+            {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </button>
         </div>
 
         {error && <p className="mb-4 text-center text-sm text-destructive">{error}</p>}
 
-        {debugCode && (
-          <div className="mb-6 rounded-xl bg-primary/5 px-4 py-3 text-center">
-            <p className="text-xs text-muted-foreground">Codigo de desarrollo:</p>
-            <p className="font-mono text-lg font-bold tracking-[0.3em] text-primary">{debugCode}</p>
-          </div>
-        )}
-
         <button
           type="button"
-          onClick={handleVerify}
-          disabled={loading || digits.some((digit) => !digit)}
+          onClick={handleSubmit}
+          disabled={loading || !password || !confirmPassword}
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:bg-primary/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Verificar"}
-        </button>
-
-        <button
-          type="button"
-          onClick={handleResend}
-          disabled={loading || resendCooldown > 0}
-          className="mt-5 flex items-center justify-center gap-2 text-sm font-medium text-primary transition-all active:scale-95 disabled:opacity-50"
-        >
-          <RefreshCw className="h-4 w-4" />
-          {resendCooldown > 0 ? `Reenviar en ${resendCooldown}s` : "Reenviar codigo"}
+          {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Guardar contraseña"}
         </button>
       </div>
     </div>

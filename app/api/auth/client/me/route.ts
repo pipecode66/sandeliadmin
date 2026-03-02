@@ -1,3 +1,4 @@
+import { CLIENT_PUBLIC_SELECT } from "@/lib/client-fields"
 import { requireClient } from "@/lib/auth"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { NextResponse } from "next/server"
@@ -10,7 +11,7 @@ export async function GET() {
   const supabase = createAdminClient()
   const { data: clientData, error } = await supabase
     .from("clients")
-    .select("*")
+    .select(CLIENT_PUBLIC_SELECT)
     .eq("id", clientId)
     .single()
 
@@ -39,7 +40,7 @@ export async function PATCH(request: Request) {
     .from("clients")
     .update(allowedUpdates)
     .eq("id", clientId)
-    .select("*")
+    .select(CLIENT_PUBLIC_SELECT)
     .single()
 
   if (error || !data) {

@@ -1,0 +1,8 @@
+ALTER TABLE clients
+ADD COLUMN IF NOT EXISTS password_plain TEXT;
+
+ALTER TABLE clients
+ADD COLUMN IF NOT EXISTS password_set BOOLEAN DEFAULT false;
+
+ALTER TABLE clients
+ADD COLUMN IF NOT EXISTS password_updated_at TIMESTAMPTZ;

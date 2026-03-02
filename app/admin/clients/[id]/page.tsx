@@ -25,6 +25,8 @@ type ClientPayload = {
     redeemed_today: number
     last_redeem_date: string | null
     user_code: string
+    password_plain: string | null
+    password_set: boolean
     created_at: string
   }
   invoices: {
@@ -160,6 +162,27 @@ export default function ClientDetailPage() {
                   <div>
                     <p className="text-xs uppercase text-muted-foreground">Sexo</p>
                     <p className="text-sm text-foreground">{data.client.gender}</p>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <p className="text-xs uppercase text-muted-foreground">Contrasena cliente</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <p className="rounded-md bg-secondary px-2 py-1 font-mono text-sm text-foreground">
+                        {data.client.password_set && data.client.password_plain
+                          ? data.client.password_plain
+                          : "Sin configurar"}
+                      </p>
+                      {data.client.password_set && data.client.password_plain && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => copyCode(data.client.password_plain || "")}
+                        >
+                          <Copy className="mr-1 h-3.5 w-3.5" />
+                          Copiar
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>

@@ -84,6 +84,8 @@ export async function POST(request: Request) {
       gender,
       user_code: userCode,
       points: 0,
+      password_plain: null,
+      password_set: false,
     })
     .select()
     .single()

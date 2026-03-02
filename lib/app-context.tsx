@@ -56,7 +56,6 @@ export interface PendingLoginState {
   identifier: string
   displayValue: string
   clientId: string
-  debugCode?: string
 }
 
 type AppScreen = "login" | "verification" | "avatar-setup" | "welcome" | "main"

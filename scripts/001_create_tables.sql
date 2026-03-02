@@ -21,6 +21,9 @@ CREATE TABLE IF NOT EXISTS clients (
   last_redeem_date DATE,
   avatar TEXT,
   avatar_type TEXT DEFAULT 'preset',
+  password_plain TEXT,
+  password_set BOOLEAN DEFAULT false,
+  password_updated_at TIMESTAMPTZ,
   user_code TEXT UNIQUE NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

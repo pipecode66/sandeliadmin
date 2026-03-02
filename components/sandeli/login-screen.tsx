@@ -3,11 +3,10 @@
 import { useState } from "react"
 import Image from "next/image"
 import { useApp } from "@/lib/app-context"
-import { Mail, Phone, ArrowRight, Loader2 } from "lucide-react"
+import { Eye, EyeOff, Lock, Mail, Phone, ArrowRight, Loader2 } from "lucide-react"
 import { CountryCodeSelector } from "./country-code-selector"
 import { countryCodes, type CountryCode } from "@/lib/country-codes"
 
-const WHATSAPP_SENDER = "3242773556"
 const defaultCountry = countryCodes.find((country) => country.code === "CO")!
 
 function normalizePhone(input: string, dialCode: string) {
@@ -18,9 +17,11 @@ function normalizePhone(input: string, dialCode: string) {
 }
 
 export function LoginScreen() {
-  const { setScreen, setPendingLogin } = useApp()
+  const { setScreen, setPendingLogin, refreshData } = useApp()
   const [mode, setMode] = useState<"email" | "phone">("phone")
   const [value, setValue] = useState("")
+  const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [selectedCountry, setSelectedCountry] = useState<CountryCode>(defaultCountry)
@@ -64,23 +65,27 @@ export function LoginScreen() {
       const response = await fetch("/api/auth/client/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier }),
+        body: JSON.stringify({ identifier, password }),
       })
       const result = await response.json()
 
       if (!response.ok) {
-        setError(result.error || "No se pudo iniciar el proceso de verificacion.")
+        setError(result.error || "No se pudo iniciar sesion.")
         return
       }
 
-      setPendingLogin({
-        mode,
-        identifier,
-        displayValue,
-        clientId: result.clientId,
-        debugCode: result.code,
-      })
-      setScreen("verification")
+      if (result.requiresPasswordSetup) {
+        setPendingLogin({
+          mode,
+          identifier,
+          displayValue,
+          clientId: result.clientId,
+        })
+        setScreen("verification")
+        return
+      }
+
+      await refreshData()
     } catch {
       setError("Error de conexion. Intenta de nuevo.")
     } finally {
@@ -115,7 +120,7 @@ export function LoginScreen() {
       <div className="safe-bottom rounded-t-3xl bg-secondary px-6 pb-10 pt-8">
         <h2 className="mb-1 text-xl font-semibold text-foreground">Iniciar sesion</h2>
         <p className="mb-6 text-sm text-muted-foreground">
-          Ingresa tu telefono o correo registrado
+          Usa tu correo o telefono y tu contraseña de 6 caracteres.
         </p>
 
         <div className="mb-5 flex rounded-xl bg-background p-1">
@@ -190,6 +195,31 @@ export function LoginScreen() {
             </div>
           )}
 
+          <div className="relative mb-4">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+              <Lock className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(event) => {
+                setPassword(event.target.value)
+                setError("")
+              }}
+              placeholder="Contraseña"
+              className="w-full rounded-xl border border-border bg-background py-3.5 pl-12 pr-12 text-foreground placeholder:text-muted-foreground/60 transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              autoComplete="current-password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute inset-y-0 right-0 flex items-center pr-4 text-muted-foreground"
+              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+            >
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
+          </div>
+
           {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
 
           <button
@@ -200,7 +230,7 @@ export function LoginScreen() {
             {loading ? (
               <>
                 <Loader2 className="h-5 w-5 animate-spin" />
-                <span>Enviando codigo...</span>
+                <span>Procesando...</span>
               </>
             ) : (
               <>
@@ -212,7 +242,7 @@ export function LoginScreen() {
         </form>
 
         <p className="mt-4 text-center text-xs text-muted-foreground">
-          Se enviara un codigo por WhatsApp desde el numero {WHATSAPP_SENDER}
+          Si es tu primer ingreso, despues de continuar deberas crear tu contraseña.
         </p>
       </div>
     </div>
