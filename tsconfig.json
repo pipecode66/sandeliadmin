@@ -37,6 +37,7 @@
   ],
   "exclude": [
     "node_modules",
-    "sandeliadmin_push"
+    "sandeliadmin_push",
+    "v0-sandeli-loyalty-app"
   ]
 }

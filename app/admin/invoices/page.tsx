@@ -1,5 +1,8 @@
 "use client"
 
+import { useMemo, useState } from "react"
+import useSWR from "swr"
+import { Loader2, Plus } from "lucide-react"
 import { AdminShell } from "@/components/admin/admin-shell"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,42 +15,56 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Loader2, Plus } from "lucide-react"
-import { useState } from "react"
-import useSWR from "swr"
-
-const fetcher = (url: string) => fetch(url).then((response) => response.json())
+import { Textarea } from "@/components/ui/textarea"
 
 type Client = { id: string; full_name: string; email: string }
+
 type Invoice = {
   id: string
   invoice_number: string
   amount: number
   points_earned: number
   created_at: string
-  clients?: { full_name?: string; email?: string }
+  clients?: { full_name?: string; email?: string } | null
+  issued_by?: { full_name?: string; email?: string; role?: string } | null
+}
+
+const fetcher = async (url: string) => {
+  const response = await fetch(url)
+  const data = await response.json()
+  if (!response.ok) {
+    throw new Error(data.error || "No se pudo cargar la información.")
+  }
+  return data
 }
 
 export default function InvoicesPage() {
   const { data: clientsData } = useSWR<{ clients: Client[] }>("/api/clients", fetcher)
-  const { data: invoicesData, mutate } = useSWR<{ invoices: Invoice[] }>("/api/invoices", fetcher, {
-    refreshInterval: 15000,
-  })
+  const { data: invoicesData, mutate } = useSWR<{ invoices: Invoice[] }>(
+    "/api/invoices",
+    fetcher,
+    {
+      refreshInterval: 15000,
+    },
+  )
 
   const [clientId, setClientId] = useState("")
   const [invoiceNumber, setInvoiceNumber] = useState("")
   const [amount, setAmount] = useState("")
+  const [comment, setComment] = useState("")
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
+  const [feedback, setFeedback] = useState<{ type: "ok" | "error"; message: string } | null>(
+    null,
+  )
 
-  const clients = clientsData?.clients || []
-  const invoices = invoicesData?.invoices || []
+  const clients = useMemo(() => clientsData?.clients || [], [clientsData?.clients])
+  const invoices = useMemo(() => invoicesData?.invoices || [], [invoicesData?.invoices])
   const calculatedPoints = Number(amount) >= 1000 ? Math.floor(Number(amount) / 1000) : 0
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     setLoading(true)
-    setError("")
+    setFeedback(null)
     try {
       const response = await fetch("/api/invoices", {
         method: "POST",
@@ -56,20 +73,26 @@ export default function InvoicesPage() {
           client_id: clientId,
           invoice_number: invoiceNumber.trim(),
           amount: Number(amount),
+          comment: comment.trim() || null,
         }),
       })
       const result = await response.json()
       if (!response.ok) {
-        setError(result.error || "No se pudo registrar la factura.")
+        setFeedback({
+          type: "error",
+          message: result.error || "No se pudo registrar la factura.",
+        })
         return
       }
 
       setClientId("")
       setInvoiceNumber("")
       setAmount("")
-      mutate()
+      setComment("")
+      setFeedback({ type: "ok", message: "Factura registrada correctamente." })
+      await mutate()
     } catch {
-      setError("Error de conexión.")
+      setFeedback({ type: "error", message: "Error de conexión." })
     } finally {
       setLoading(false)
     }
@@ -81,13 +104,29 @@ export default function InvoicesPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Facturas</h1>
           <p className="text-sm text-muted-foreground">
-            Registra facturas para sumar puntos automáticamente a cada cliente.
+            Registra facturas para sumar puntos y revisar quién emitió cada registro.
           </p>
         </div>
 
+        {feedback && (
+          <Card
+            className={
+              feedback.type === "ok"
+                ? "border-emerald-200 bg-emerald-50"
+                : "border-red-200 bg-red-50"
+            }
+          >
+            <CardContent
+              className={feedback.type === "ok" ? "py-3 text-sm text-emerald-700" : "py-3 text-sm text-red-700"}
+            >
+              {feedback.message}
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
           <CardHeader>
-            <CardTitle>Registrar Factura</CardTitle>
+            <CardTitle>Registrar factura</CardTitle>
           </CardHeader>
           <CardContent>
             <form className="grid grid-cols-1 gap-4 md:grid-cols-3" onSubmit={onSubmit}>
@@ -108,7 +147,7 @@ export default function InvoicesPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="invoice">Número factura</Label>
+                <Label htmlFor="invoice">Número de factura</Label>
                 <Input
                   id="invoice"
                   value={invoiceNumber}
@@ -136,7 +175,15 @@ export default function InvoicesPage() {
                 <p className="text-xl font-bold text-primary">{calculatedPoints}</p>
               </div>
 
-              {error && <p className="text-sm text-destructive md:col-span-3">{error}</p>}
+              <div className="space-y-2 md:col-span-3">
+                <Label htmlFor="comment">Comentario (opcional)</Label>
+                <Textarea
+                  id="comment"
+                  value={comment}
+                  onChange={(event) => setComment(event.target.value)}
+                  placeholder="Observaciones de la factura"
+                />
+              </div>
 
               <div className="md:col-span-3">
                 <Button
@@ -148,7 +195,7 @@ export default function InvoicesPage() {
                   ) : (
                     <Plus className="mr-2 h-4 w-4" />
                   )}
-                  Registrar Factura
+                  Registrar factura
                 </Button>
               </div>
             </form>
@@ -157,7 +204,7 @@ export default function InvoicesPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Historial</CardTitle>
+            <CardTitle>Historial de facturas</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -169,12 +216,13 @@ export default function InvoicesPage() {
                     <th className="px-3 py-2 text-left">Factura</th>
                     <th className="px-3 py-2 text-right">Monto</th>
                     <th className="px-3 py-2 text-right">Puntos</th>
+                    <th className="px-3 py-2 text-left">Emitida por</th>
                   </tr>
                 </thead>
                 <tbody>
                   {invoices.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-3 py-6 text-center text-muted-foreground">
+                      <td colSpan={6} className="px-3 py-6 text-center text-muted-foreground">
                         Sin facturas registradas.
                       </td>
                     </tr>
@@ -191,6 +239,16 @@ export default function InvoicesPage() {
                         </td>
                         <td className="px-3 py-2 text-right font-semibold text-primary">
                           +{invoice.points_earned}
+                        </td>
+                        <td className="px-3 py-2">
+                          <p className="text-xs text-foreground">
+                            {invoice.issued_by?.full_name || "Sin registro"}
+                          </p>
+                          {invoice.issued_by?.role && (
+                            <p className="text-[11px] text-muted-foreground">
+                              {invoice.issued_by.role}
+                            </p>
+                          )}
                         </td>
                       </tr>
                     ))

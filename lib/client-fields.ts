@@ -8,6 +8,7 @@ export const CLIENT_PUBLIC_SELECT = [
   "points",
   "redeemed_today",
   "last_redeem_date",
+  "daily_limit_override",
   "avatar",
   "avatar_type",
   "user_code",

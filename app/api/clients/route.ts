@@ -1,6 +1,7 @@
-import { requireAdmin } from "@/lib/auth"
-import { createAdminClient } from "@/lib/supabase/admin"
 import { NextResponse } from "next/server"
+import { requireAdmin } from "@/lib/auth"
+import { createAuditLog } from "@/lib/audit-log"
+import { createAdminClient } from "@/lib/supabase/admin"
 
 function generateUserCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789"
@@ -15,17 +16,14 @@ function generateUserCode(): string {
 }
 
 export async function GET(request: Request) {
-  const admin = await requireAdmin()
+  const admin = await requireAdmin("caja")
   if (!admin.ok) return admin.response
 
   const { searchParams } = new URL(request.url)
   const search = searchParams.get("search") || ""
   const supabase = createAdminClient()
 
-  let query = supabase
-    .from("clients")
-    .select("*")
-    .order("created_at", { ascending: false })
+  let query = supabase.from("clients").select("*").order("created_at", { ascending: false })
 
   if (search) {
     query = query.or(
@@ -34,7 +32,6 @@ export async function GET(request: Request) {
   }
 
   const { data, error } = await query
-
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
@@ -43,21 +40,30 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const admin = await requireAdmin()
+  const admin = await requireAdmin("supervisor")
   if (!admin.ok) return admin.response
 
   const body = await request.json()
-  const { email, full_name, phone, address, gender } = body
-  if (!email || !full_name || !phone || !address || !gender) {
+  const email = String(body.email || "").trim().toLowerCase()
+  const fullName = String(body.full_name || "").trim()
+  const phone = String(body.phone || "").trim()
+  const address = String(body.address || "").trim()
+  const gender = body.gender
+
+  if (!email || !fullName || !phone || !address || !gender) {
     return NextResponse.json(
       { error: "Todos los campos son obligatorios." },
       { status: 400 },
     )
   }
 
+  if (gender !== "Femenino" && gender !== "Masculino") {
+    return NextResponse.json({ error: "Género inválido." }, { status: 400 })
+  }
+
   const supabase = createAdminClient()
   const userCode = generateUserCode()
-  const normalizedPhone = String(phone).replace(/[^\d]/g, "")
+  const normalizedPhone = phone.replace(/[^\d]/g, "")
 
   const { data: existingPhone } = await supabase
     .from("clients")
@@ -77,12 +83,14 @@ export async function POST(request: Request) {
     .from("clients")
     .insert({
       email,
-      full_name,
+      full_name: fullName,
       phone: normalizedPhone,
       address,
       gender,
       user_code: userCode,
       points: 0,
+      redeemed_today: 0,
+      daily_limit_override: false,
       password_plain: null,
       password_set: false,
     })
@@ -98,6 +106,15 @@ export async function POST(request: Request) {
     }
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  await createAuditLog({
+    entityType: "client",
+    entityId: client.id,
+    action: "create",
+    afterData: client,
+    comment: typeof body.comment === "string" ? body.comment : null,
+    adminUserId: admin.admin.id,
+  })
 
   return NextResponse.json({ client }, { status: 201 })
 }

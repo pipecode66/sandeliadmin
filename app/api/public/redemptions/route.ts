@@ -23,7 +23,9 @@ export async function GET(request: Request) {
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from("redemptions")
-    .select("id, code, points_spent, status, created_at, validated_at, product_id, products(name, image_url)")
+    .select(
+      "id, code, points_spent, status, created_at, validated_at, product_id, products(name, image_url)",
+    )
     .eq("client_id", auth.clientId)
     .order("created_at", { ascending: false })
 
@@ -39,7 +41,6 @@ export async function POST(request: Request) {
   if (!auth.ok) return auth.response
 
   let body: { product_id?: unknown }
-
   try {
     body = (await request.json()) as { product_id?: unknown }
   } catch {
@@ -59,17 +60,12 @@ export async function POST(request: Request) {
 
   const { data: client } = await supabase
     .from("clients")
-    .select("id, points, redeemed_today, last_redeem_date")
+    .select("id, points, redeemed_today, last_redeem_date, daily_limit_override")
     .eq("id", auth.clientId)
     .single()
 
   if (!client) {
-    return corsJson(
-      request,
-      { error: "Cliente no encontrado." },
-      { status: 404 },
-      CORS_METHODS,
-    )
+    return corsJson(request, { error: "Cliente no encontrado." }, { status: 404 }, CORS_METHODS)
   }
 
   const { data: product } = await supabase
@@ -79,12 +75,7 @@ export async function POST(request: Request) {
     .single()
 
   if (!product) {
-    return corsJson(
-      request,
-      { error: "Producto no encontrado." },
-      { status: 404 },
-      CORS_METHODS,
-    )
+    return corsJson(request, { error: "Producto no encontrado." }, { status: 404 }, CORS_METHODS)
   }
 
   const pointsCost =
@@ -104,7 +95,7 @@ export async function POST(request: Request) {
   const currentRedeemedToday =
     client.last_redeem_date === today ? client.redeemed_today : 0
 
-  if (currentRedeemedToday + pointsCost > 60) {
+  if (!client.daily_limit_override && currentRedeemedToday + pointsCost > 60) {
     const now = new Date()
     const midnight = new Date(now)
     midnight.setHours(24, 0, 0, 0)
@@ -138,10 +129,5 @@ export async function POST(request: Request) {
     return corsJson(request, { error: error.message }, { status: 500 }, CORS_METHODS)
   }
 
-  return corsJson(
-    request,
-    { redemption, code },
-    { status: 201 },
-    CORS_METHODS,
-  )
+  return corsJson(request, { redemption, code }, { status: 201 }, CORS_METHODS)
 }
