@@ -107,7 +107,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               />
             </div>
             <div className="flex flex-col leading-tight">
-              <span className="text-base font-bold text-foreground">andeli Admin</span>
+              <span className="text-base font-bold text-foreground">Sandeli Admin</span>
               <span className="text-xs text-muted-foreground">Panel empresarial</span>
             </div>
           </Link>

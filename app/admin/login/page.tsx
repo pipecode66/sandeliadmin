@@ -58,7 +58,7 @@ export default function AdminLoginPage() {
               priority
             />
           </div>
-          <h1 className="text-xl font-bold text-foreground">andeli Admin</h1>
+          <h1 className="text-xl font-bold text-foreground">Sandeli Admin</h1>
           <p className="text-sm text-muted-foreground">Ingresa tus credenciales para acceder</p>
         </CardHeader>
 
