@@ -7,7 +7,7 @@ export async function POST(request: Request) {
   const { identifier, password } = await request.json()
   if (!identifier || typeof identifier !== "string") {
     return NextResponse.json(
-      { error: "Debes enviar un correo o telefono valido." },
+      { error: "Debes enviar un correo o teléfono válido." },
       { status: 400 },
     )
   }
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
 
   if (error || !client) {
     return NextResponse.json(
-      { error: "No se encontro una cuenta con esas credenciales." },
+      { error: "No se encontró una cuenta con esas credenciales." },
       { status: 404 },
     )
   }

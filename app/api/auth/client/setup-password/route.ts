@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   const { clientId, password } = await request.json()
 
   if (!clientId || typeof clientId !== "string") {
-    return NextResponse.json({ error: "Cliente invalido." }, { status: 400 })
+    return NextResponse.json({ error: "Cliente inválido." }, { status: 400 })
   }
 
   if (!password || typeof password !== "string" || !isValidSimplePassword(password)) {

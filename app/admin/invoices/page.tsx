@@ -69,7 +69,7 @@ export default function InvoicesPage() {
       setAmount("")
       mutate()
     } catch {
-      setError("Error de conexion.")
+      setError("Error de conexión.")
     } finally {
       setLoading(false)
     }
@@ -81,7 +81,7 @@ export default function InvoicesPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Facturas</h1>
           <p className="text-sm text-muted-foreground">
-            Registra facturas para sumar puntos automaticamente a cada cliente.
+            Registra facturas para sumar puntos automáticamente a cada cliente.
           </p>
         </div>
 
@@ -108,7 +108,7 @@ export default function InvoicesPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="invoice">Numero factura</Label>
+                <Label htmlFor="invoice">Número factura</Label>
                 <Input
                   id="invoice"
                   value={invoiceNumber}

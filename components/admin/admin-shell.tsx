@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import {
@@ -22,7 +23,7 @@ const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/clients", label: "Clientes", icon: Users },
   { href: "/admin/products", label: "Productos", icon: Package },
-  { href: "/admin/categories", label: "Categorias", icon: Tags },
+  { href: "/admin/categories", label: "Categorías", icon: Tags },
   { href: "/admin/invoices", label: "Facturas", icon: FileText },
   { href: "/admin/banners", label: "Banners", icon: ImageIcon },
 ]
@@ -58,8 +59,15 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         {/* Logo */}
         <div className="flex h-16 items-center justify-between border-b border-border px-4">
           <Link href="/admin" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <span className="text-sm font-bold text-primary-foreground font-serif">S</span>
+            <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg bg-primary">
+              <Image
+                src="/images/logoIOS.png"
+                alt="logoIOS"
+                width={32}
+                height={32}
+                className="h-full w-full object-cover"
+                priority
+              />
             </div>
             <span className="text-lg font-bold text-foreground">Sandeli</span>
           </Link>
@@ -104,7 +112,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-destructive"
           >
             <LogOut className="h-4 w-4" />
-            Cerrar sesion
+            Cerrar sesión
           </button>
         </div>
       </aside>

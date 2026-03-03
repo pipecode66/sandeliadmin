@@ -43,7 +43,7 @@ export default function NewClientPage() {
 
       router.push(`/admin/clients/${data.client.id}`)
     } catch {
-      setError("Error de conexi\u00f3n")
+      setError("Error de conexión")
     } finally {
       setLoading(false)
     }
@@ -54,7 +54,7 @@ export default function NewClientPage() {
       <div className="mx-auto max-w-lg">
         <Card>
           <CardHeader>
-            <CardTitle>Registrar Nuevo Cliente</CardTitle>
+            <CardTitle>Registrar nuevo cliente</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -62,14 +62,14 @@ export default function NewClientPage() {
                 <Label htmlFor="full_name">Nombre y Apellido</Label>
                 <Input
                   id="full_name"
-                  placeholder="Juan Perez"
+                  placeholder="Juan Pérez"
                   value={form.full_name}
                   onChange={(e) => setForm({ ...form, full_name: e.target.value })}
                   required
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="email">Correo Electr&oacute;nico</Label>
+                <Label htmlFor="email">Correo electrónico</Label>
                 <Input
                   id="email"
                   type="email"
@@ -80,7 +80,7 @@ export default function NewClientPage() {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="phone">N&uacute;mero de Tel&eacute;fono</Label>
+                <Label htmlFor="phone">Número de teléfono</Label>
                 <Input
                   id="phone"
                   placeholder="573001234567"
@@ -122,7 +122,7 @@ export default function NewClientPage() {
 
               <Button type="submit" className="w-full" disabled={loading || !form.gender}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Registrar Cliente
+                Registrar cliente
               </Button>
             </form>
           </CardContent>

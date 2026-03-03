@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { AdminShell } from "@/components/admin/admin-shell"
 import { Button } from "@/components/ui/button"
@@ -59,14 +59,14 @@ export default function CategoriesPage() {
       const result = await response.json()
 
       if (!response.ok) {
-        setError(result.error || "No se pudo guardar la categoria.")
+        setError(result.error || "No se pudo guardar la categoría.")
         return
       }
 
       resetForm()
       mutate()
     } catch {
-      setError("Error de conexion.")
+      setError("Error de conexión.")
     } finally {
       setLoading(false)
     }
@@ -80,12 +80,12 @@ export default function CategoriesPage() {
   }
 
   const onDelete = async (id: string) => {
-    const confirmed = window.confirm("Eliminar categoria?")
+    const confirmed = window.confirm("¿Eliminar categoría?")
     if (!confirmed) return
     const response = await fetch(`/api/categories/${id}`, { method: "DELETE" })
     const result = await response.json()
     if (!response.ok) {
-      setError(result.error || "No se pudo eliminar la categoria.")
+      setError(result.error || "No se pudo eliminar la categoría.")
       return
     }
     mutate()
@@ -95,15 +95,15 @@ export default function CategoriesPage() {
     <AdminShell>
       <div className="flex flex-col gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Categorias</h1>
+          <h1 className="text-2xl font-bold text-foreground">Categorías</h1>
           <p className="text-sm text-muted-foreground">
-            Administra categorias y puntos que se descuentan por canje.
+            Administra categorías y puntos que se descuentan por canje.
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>{editing ? "Editar Categoria" : "Nueva Categoria"}</CardTitle>
+            <CardTitle>{editing ? "Editar categoría" : "Nueva categoría"}</CardTitle>
           </CardHeader>
           <CardContent>
             <form className="grid grid-cols-1 gap-4 sm:grid-cols-3" onSubmit={onSubmit}>
@@ -137,7 +137,7 @@ export default function CategoriesPage() {
                   ) : (
                     <Plus className="mr-2 h-4 w-4" />
                   )}
-                  {editing ? "Guardar Cambios" : "Agregar Categoria"}
+                  {editing ? "Guardar cambios" : "Agregar categoría"}
                 </Button>
                 {editing && (
                   <Button type="button" variant="outline" onClick={resetForm}>
@@ -155,7 +155,7 @@ export default function CategoriesPage() {
           </CardHeader>
           <CardContent className="space-y-2">
             {categories.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Sin categorias.</p>
+              <p className="text-sm text-muted-foreground">Sin categorías.</p>
             ) : (
               categories.map((category) => {
                 const productCount = category.products?.[0]?.count || 0
@@ -190,3 +190,4 @@ export default function CategoriesPage() {
     </AdminShell>
   )
 }
+

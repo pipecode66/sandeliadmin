@@ -19,7 +19,7 @@ export async function POST(request: Request) {
 
   if (error || !redemption) {
     return NextResponse.json(
-      { error: "Codigo no encontrado o ya fue validado." },
+      { error: "Código no encontrado o ya fue validado." },
       { status: 404 }
     )
   }
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   // Check daily limit
   if (currentRedeemedToday + redemption.points_spent > 60) {
     return NextResponse.json(
-      { error: "El cliente ya alcanzo el limite diario de 60 puntos canjeados." },
+      { error: "El cliente ya alcanzó el límite diario de 60 puntos canjeados." },
       { status: 400 }
     )
   }

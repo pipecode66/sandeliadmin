@@ -68,7 +68,7 @@ export async function POST(request: Request) {
 
   if (existingPhone) {
     return NextResponse.json(
-      { error: "Ya existe un cliente con ese numero de telefono." },
+      { error: "Ya existe un cliente con ese número de teléfono." },
       { status: 409 },
     )
   }
@@ -92,7 +92,7 @@ export async function POST(request: Request) {
   if (error) {
     if (error.code === "23505") {
       return NextResponse.json(
-        { error: "Ya existe un cliente con ese correo electronico." },
+        { error: "Ya existe un cliente con ese correo electrónico." },
         { status: 409 },
       )
     }

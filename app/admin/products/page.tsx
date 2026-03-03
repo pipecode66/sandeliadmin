@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { AdminShell } from "@/components/admin/admin-shell"
 import { Button } from "@/components/ui/button"
@@ -82,7 +82,7 @@ export default function ProductsPage() {
       }
       setForm((current) => ({ ...current, image_url: result.url }))
     } catch {
-      setError("Error de conexion subiendo imagen.")
+      setError("Error de conexión subiendo imagen.")
     } finally {
       setUploading(false)
     }
@@ -115,7 +115,7 @@ export default function ProductsPage() {
       resetForm()
       mutateProducts()
     } catch {
-      setError("Error de conexion al guardar.")
+      setError("Error de conexión al guardar.")
     } finally {
       setSaving(false)
     }
@@ -133,7 +133,7 @@ export default function ProductsPage() {
   }
 
   const onDelete = async (productId: string) => {
-    const confirmed = window.confirm("Esta accion eliminara el producto. Deseas continuar?")
+    const confirmed = window.confirm("Esta acción eliminará el producto. ¿Deseas continuar?")
     if (!confirmed) return
 
     const response = await fetch(`/api/products/${productId}`, { method: "DELETE" })
@@ -146,7 +146,7 @@ export default function ProductsPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Productos</h1>
           <p className="text-sm text-muted-foreground">
-            Agrega, edita o elimina productos redimibles del menu.
+            Agrega, edita o elimina productos redimibles del menú.
           </p>
         </div>
 
@@ -167,13 +167,13 @@ export default function ProductsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Categoria</Label>
+                <Label>Categoría</Label>
                 <Select
                   value={form.category_id}
                   onValueChange={(value) => setForm((cur) => ({ ...cur, category_id: value }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecciona categoria" />
+                    <SelectValue placeholder="Selecciona categoría" />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((category) => (
@@ -230,7 +230,7 @@ export default function ProductsPage() {
 
               {selectedCategory && (
                 <div className="rounded-lg bg-primary/10 p-3 text-sm text-primary lg:col-span-2">
-                  Este producto descontara {selectedCategory.points_cost} puntos al cliente.
+                  Este producto descontará {selectedCategory.points_cost} puntos al cliente.
                 </div>
               )}
 
@@ -249,7 +249,7 @@ export default function ProductsPage() {
                 </Button>
                 {editing && (
                   <Button type="button" variant="outline" onClick={resetForm}>
-                    Cancelar Edicion
+                    Cancelar edición
                   </Button>
                 )}
               </div>
@@ -288,7 +288,7 @@ export default function ProductsPage() {
                     <p className="text-sm font-semibold text-foreground">{product.name}</p>
                     <p className="text-xs text-muted-foreground">{product.description}</p>
                     <p className="text-xs text-primary">
-                      {product.categories?.name || "Sin categoria"} ·{" "}
+                      {product.categories?.name || "Sin categoría"} ·{" "}
                       {product.categories?.points_cost ?? product.points_cost} pts
                     </p>
                   </div>
@@ -311,3 +311,4 @@ export default function ProductsPage() {
     </AdminShell>
   )
 }
+

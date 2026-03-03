@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { AdminShell } from "@/components/admin/admin-shell"
 import { Button } from "@/components/ui/button"
@@ -84,18 +84,18 @@ export default function ClientDetailPage() {
       if (!response.ok) {
         setFeedback({
           type: "error",
-          message: result.error || "No se pudo validar el codigo.",
+          message: result.error || "No se pudo validar el código.",
         })
       } else {
         setFeedback({
           type: "ok",
-          message: `Codigo validado. Se descontaron ${result.pointsDeducted} puntos.`,
+          message: `Código validado. Se descontaron ${result.pointsDeducted} puntos.`,
         })
         setCode("")
         mutate()
       }
     } catch {
-      setFeedback({ type: "error", message: "Error de conexion." })
+      setFeedback({ type: "error", message: "Error de conexión." })
     } finally {
       setLoading(false)
     }
@@ -144,7 +144,7 @@ export default function ClientDetailPage() {
                     <p className="text-sm font-medium text-foreground">{data.client.full_name}</p>
                   </div>
                   <div>
-                    <p className="text-xs uppercase text-muted-foreground">Codigo cliente</p>
+                    <p className="text-xs uppercase text-muted-foreground">Código cliente</p>
                     <p className="text-sm font-medium text-foreground">{data.client.user_code}</p>
                   </div>
                   <div>
@@ -152,11 +152,11 @@ export default function ClientDetailPage() {
                     <p className="text-sm text-foreground">{data.client.email}</p>
                   </div>
                   <div>
-                    <p className="text-xs uppercase text-muted-foreground">Telefono</p>
+                    <p className="text-xs uppercase text-muted-foreground">Teléfono</p>
                     <p className="text-sm text-foreground">{data.client.phone}</p>
                   </div>
                   <div>
-                    <p className="text-xs uppercase text-muted-foreground">Direccion</p>
+                    <p className="text-xs uppercase text-muted-foreground">Dirección</p>
                     <p className="text-sm text-foreground">{data.client.address}</p>
                   </div>
                   <div>
@@ -164,7 +164,7 @@ export default function ClientDetailPage() {
                     <p className="text-sm text-foreground">{data.client.gender}</p>
                   </div>
                   <div className="sm:col-span-2">
-                    <p className="text-xs uppercase text-muted-foreground">Contrasena cliente</p>
+                    <p className="text-xs uppercase text-muted-foreground">Contraseña cliente</p>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
                       <p className="rounded-md bg-secondary px-2 py-1 font-mono text-sm text-foreground">
                         {data.client.password_set && data.client.password_plain
@@ -203,7 +203,7 @@ export default function ClientDetailPage() {
                     </p>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Limite diario: maximo 60 puntos validados.
+                    Límite diario: máximo 60 puntos validados.
                   </p>
                 </CardContent>
               </Card>
@@ -213,13 +213,13 @@ export default function ClientDetailPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <ShieldCheck className="h-4 w-4 text-primary" />
-                  Validar Codigo de Redencion
+                  Validar código de redención
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <div className="flex-1">
-                    <Label htmlFor="code">Codigo</Label>
+                    <Label htmlFor="code">Código</Label>
                     <Input
                       id="code"
                       value={code}
@@ -231,7 +231,7 @@ export default function ClientDetailPage() {
                   <div className="sm:self-end">
                     <Button onClick={() => onValidateCode()} disabled={loading || !code.trim()}>
                       {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Validar Codigo
+                      Validar código
                     </Button>
                   </div>
                 </div>
@@ -256,7 +256,7 @@ export default function ClientDetailPage() {
                   </p>
                   {pendingRedemptions.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
-                      No hay codigos pendientes para este cliente.
+                      No hay códigos pendientes para este cliente.
                     </p>
                   ) : (
                     <div className="space-y-2">
@@ -270,7 +270,7 @@ export default function ClientDetailPage() {
                               {item.products?.name || "Producto"}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              Codigo: {item.code} · {item.points_spent} pts
+                              Código: {item.code} · {item.points_spent} pts
                             </p>
                           </div>
                           <div className="flex gap-2">
@@ -329,7 +329,7 @@ export default function ClientDetailPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Historial de Redenciones</CardTitle>
+                  <CardTitle>Historial de redenciones</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {data.redemptions.length === 0 ? (
@@ -356,7 +356,7 @@ export default function ClientDetailPage() {
                           )}
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          Codigo {redemption.code} · {redemption.points_spent} pts
+                          Código {redemption.code} · {redemption.points_spent} pts
                         </p>
                       </div>
                     ))
@@ -370,3 +370,4 @@ export default function ClientDetailPage() {
     </AdminShell>
   )
 }
+

@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   if (error) {
     if (error.code === "23505") {
       return NextResponse.json(
-        { error: "Ya existe una categoria con ese nombre." },
+        { error: "Ya existe una categoría con ese nombre." },
         { status: 409 }
       )
     }

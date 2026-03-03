@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     const waitMinutes = Math.ceil((midnight.getTime() - now.getTime()) / 60000)
     return NextResponse.json(
       {
-        error: `Has alcanzado el limite diario de 60 puntos. Intenta nuevamente manana.`,
+        error: `Has alcanzado el límite diario de 60 puntos. Intenta nuevamente mañana.`,
         waitMinutes,
       },
       { status: 400 }

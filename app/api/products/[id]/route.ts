@@ -42,7 +42,7 @@ export async function PATCH(
       .single()
 
     if (!category) {
-      return NextResponse.json({ error: "Categoria no encontrada." }, { status: 404 })
+      return NextResponse.json({ error: "Categoría no encontrada." }, { status: 404 })
     }
 
     payload = {

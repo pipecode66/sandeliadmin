@@ -19,7 +19,7 @@ export async function POST(request: Request) {
 
   if (error) {
     return NextResponse.json(
-      { error: `No se pudo iniciar sesion de administrador: ${error.message}` },
+      { error: `No se pudo iniciar sesión de administrador: ${error.message}` },
       { status: 401 },
     )
   }

@@ -33,7 +33,7 @@ export async function POST(request: Request) {
   const { category_id } = body
   if (!body?.name || !category_id) {
     return NextResponse.json(
-      { error: "Nombre y categoria son obligatorios." },
+      { error: "Nombre y categoría son obligatorios." },
       { status: 400 },
     )
   }
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     .single()
 
   if (!category) {
-    return NextResponse.json({ error: "Categoria no encontrada." }, { status: 404 })
+    return NextResponse.json({ error: "Categoría no encontrada." }, { status: 404 })
   }
 
   const { data, error } = await supabase

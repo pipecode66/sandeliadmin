@@ -16,7 +16,7 @@ export const CLIENT_PUBLIC_SELECT = [
 ].join(",")
 
 export const CLIENT_PASSWORD_RULE =
-  "La contraseña debe tener exactamente 6 caracteres e incluir una mayuscula, un numero y un caracter especial."
+  "La contraseña debe tener exactamente 6 caracteres e incluir una mayúscula, un número y un carácter especial."
 
 export function isValidSimplePassword(password: string) {
   return /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6}$/.test(password)

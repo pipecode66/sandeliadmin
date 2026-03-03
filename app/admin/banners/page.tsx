@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { AdminShell } from "@/components/admin/admin-shell"
 import { Button } from "@/components/ui/button"
@@ -65,7 +65,7 @@ export default function BannersPage() {
       setMediaUrl(result.url)
       setMediaType(file.type.startsWith("video/") ? "video" : "image")
     } catch {
-      setError("Error de conexion subiendo archivo.")
+      setError("Error de conexión subiendo archivo.")
     } finally {
       setUploading(false)
     }
@@ -102,7 +102,7 @@ export default function BannersPage() {
       resetForm()
       mutate()
     } catch {
-      setError("Error de conexion.")
+      setError("Error de conexión.")
     } finally {
       setSaving(false)
     }
@@ -140,7 +140,7 @@ export default function BannersPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Banners</h1>
           <p className="text-sm text-muted-foreground">
-            Gestiona banners publicitarios (imagen/video maximo 25MB) para la app.
+            Gestiona banners publicitarios (imagen/video máximo 25MB) para la app.
           </p>
         </div>
 
@@ -260,7 +260,7 @@ export default function BannersPage() {
                       {banner.media_type === "image" ? "Imagen" : "Video"} · Orden {banner.sort_order}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Redireccion: {banner.redirect_url || "Sin URL"}
+                      Redirección: {banner.redirect_url || "Sin URL"}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -286,3 +286,4 @@ export default function BannersPage() {
     </AdminShell>
   )
 }
+
