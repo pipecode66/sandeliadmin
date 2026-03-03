@@ -115,14 +115,14 @@ export default function ClientDetailPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Detalle de Cliente</h1>
           <p className="text-sm text-muted-foreground">
-            Validacion de codigos, puntos e historial del cliente.
+            Validaci&oacute;n de c&oacute;digos, puntos e historial del cliente.
           </p>
         </div>
 
         {isLoading ? (
           <Card>
             <CardContent className="py-10 text-center text-sm text-muted-foreground">
-              Cargando informacion...
+              Cargando informaci&oacute;n...
             </CardContent>
           </Card>
         ) : !data?.client ? (
@@ -136,7 +136,7 @@ export default function ClientDetailPage() {
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
               <Card className="lg:col-span-2">
                 <CardHeader>
-                  <CardTitle>Informacion General</CardTitle>
+                  <CardTitle>Informaci&oacute;n General</CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>

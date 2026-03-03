@@ -55,7 +55,7 @@ export default function AdminDashboard() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
           <p className="text-sm text-muted-foreground">
-            Resumen general del programa de fidelizacion Sandeli
+            Resumen general del programa de fidelizaci&oacute;n Sandeli
           </p>
         </div>
 
@@ -94,7 +94,7 @@ export default function AdminDashboard() {
                   {stats.pendingRedemptions}
                 </span>{" "}
                 {stats.pendingRedemptions === 1
-                  ? "redencion pendiente"
+                  ? "redenci\u00f3n pendiente"
                   : "redenciones pendientes"}{" "}
                 de validar.
               </p>
@@ -106,7 +106,7 @@ export default function AdminDashboard() {
           {/* Chart */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Puntos Canjeados (7 dias)</CardTitle>
+              <CardTitle className="text-base">Puntos Canjeados (7 d&iacute;as)</CardTitle>
             </CardHeader>
             <CardContent>
               {chartData && chartData.length > 0 ? (
@@ -136,7 +136,7 @@ export default function AdminDashboard() {
                 </ResponsiveContainer>
               ) : (
                 <div className="flex h-[220px] items-center justify-center">
-                  <p className="text-sm text-muted-foreground">Sin datos aun</p>
+                  <p className="text-sm text-muted-foreground">Sin datos a&uacute;n</p>
                 </div>
               )}
             </CardContent>

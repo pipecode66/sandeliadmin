@@ -28,7 +28,7 @@ export default function ClientsPage() {
           <div>
             <h1 className="text-2xl font-bold text-foreground">Clientes</h1>
             <p className="text-sm text-muted-foreground">
-              Gestiona los clientes del programa de fidelizacion
+              Gestiona los clientes del programa de fidelizaci&oacute;n
             </p>
           </div>
           <Link href="/admin/clients/new">
@@ -43,7 +43,7 @@ export default function ClientsPage() {
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Buscar por nombre, email o telefono..."
+            placeholder="Buscar por nombre, email o tel&eacute;fono..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -64,7 +64,7 @@ export default function ClientsPage() {
                       Email
                     </th>
                     <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground sm:table-cell">
-                      Telefono
+                      Tel&eacute;fono
                     </th>
                     <th className="px-4 py-3 text-center text-xs font-medium uppercase text-muted-foreground">
                       Puntos

@@ -43,7 +43,7 @@ export default function NewClientPage() {
 
       router.push(`/admin/clients/${data.client.id}`)
     } catch {
-      setError("Error de conexion")
+      setError("Error de conexi\u00f3n")
     } finally {
       setLoading(false)
     }
@@ -69,7 +69,7 @@ export default function NewClientPage() {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="email">Correo Electronico</Label>
+                <Label htmlFor="email">Correo Electr&oacute;nico</Label>
                 <Input
                   id="email"
                   type="email"
@@ -80,7 +80,7 @@ export default function NewClientPage() {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="phone">Numero de Telefono</Label>
+                <Label htmlFor="phone">N&uacute;mero de Tel&eacute;fono</Label>
                 <Input
                   id="phone"
                   placeholder="573001234567"
@@ -90,7 +90,7 @@ export default function NewClientPage() {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="address">Direccion</Label>
+                <Label htmlFor="address">Direcci&oacute;n</Label>
                 <Input
                   id="address"
                   placeholder="Calle 123 #45-67, Ciudad"
