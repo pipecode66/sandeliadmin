@@ -38,7 +38,7 @@ export default function AdminLoginPage() {
       router.push("/admin")
       router.refresh()
     } catch {
-      setError("Error de conexion. Intenta de nuevo.")
+      setError("Error de conexi\u00f3n. Intenta de nuevo.")
     } finally {
       setLoading(false)
     }
@@ -48,8 +48,8 @@ export default function AdminLoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-secondary p-4">
       <Card className="w-full max-w-sm border-0 shadow-xl">
         <CardHeader className="items-center gap-2 pb-2">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary">
-            <span className="text-2xl font-bold text-primary-foreground font-serif">S</span>
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary overflow-hidden">
+            <img src="/images/logo-sandeli.png" alt="Sandeli" className="h-full w-full object-cover" />
           </div>
           <h1 className="text-xl font-bold text-foreground">Panel Administrativo</h1>
           <p className="text-sm text-muted-foreground">Ingresa tus credenciales para acceder</p>
@@ -57,7 +57,7 @@ export default function AdminLoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="email">Correo electronico</Label>
+              <Label htmlFor="email">Correo electr&oacute;nico</Label>
               <Input
                 id="email"
                 type="email"
@@ -68,12 +68,12 @@ export default function AdminLoginPage() {
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="password">Contrasena</Label>
+              <Label htmlFor="password">Contrase&ntilde;a</Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Tu contrasena"
+                  placeholder="Tu contrase\u00f1a"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -92,7 +92,7 @@ export default function AdminLoginPage() {
             )}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Iniciar sesion
+              Iniciar sesi&oacute;n
             </Button>
           </form>
         </CardContent>
