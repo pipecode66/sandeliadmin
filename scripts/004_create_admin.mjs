@@ -9,6 +9,8 @@ const ADMIN_ROLE = process.env.ADMIN_ROLE || "super_admin"
 
 if (!SUPABASE_URL || !SERVICE_ROLE) {
   console.error("Faltan NEXT_PUBLIC_SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY.")
+  console.error("Este script .mjs se ejecuta en terminal (Node), no en SQL Editor de Supabase.")
+  console.error("Si necesitas SQL Editor, usa scripts/008_sync_admin_user.sql.")
   process.exit(1)
 }
 
