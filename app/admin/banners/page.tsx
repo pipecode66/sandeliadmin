@@ -4,6 +4,7 @@ import { useMemo, useState } from "react"
 import Image from "next/image"
 import useSWR from "swr"
 import { Loader2, Pencil, Trash2, Upload } from "lucide-react"
+import { uploadAdminFile } from "@/lib/admin-upload"
 import { AdminShell } from "@/components/admin/admin-shell"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -50,7 +51,7 @@ const fetcher = async (url: string) => {
   const response = await fetch(url)
   const data = await response.json()
   if (!response.ok) {
-    throw new Error(data.error || "No se pudo cargar la información.")
+    throw new Error(data.error || "No se pudo cargar la informaciÃ³n.")
   }
   return data
 }
@@ -103,22 +104,17 @@ export default function BannersPage() {
     setUploading(true)
     setFeedback(null)
     try {
-      const body = new FormData()
-      body.append("file", file)
-      body.append("folder", "banners")
-      const response = await fetch("/api/upload", { method: "POST", body })
-      const result = await response.json()
-      if (!response.ok) {
-        setFeedback({ type: "error", message: result.error || "No se pudo subir el archivo." })
-        return
-      }
+      const url = await uploadAdminFile(file, "banners")
       setForm((current) => ({
         ...current,
-        mediaUrl: result.url,
+        mediaUrl: url,
         mediaType: file.type.startsWith("video/") ? "video" : "image",
       }))
-    } catch {
-      setFeedback({ type: "error", message: "Error de conexión subiendo archivo." })
+    } catch (error) {
+      setFeedback({
+        type: "error",
+        message: error instanceof Error ? error.message : "Error de conexión subiendo archivo.",
+      })
     } finally {
       setUploading(false)
     }
@@ -164,7 +160,7 @@ export default function BannersPage() {
       })
       await mutate()
     } catch {
-      setFeedback({ type: "error", message: "Error de conexión." })
+      setFeedback({ type: "error", message: "Error de conexiÃ³n." })
     } finally {
       setSaving(false)
     }
@@ -188,7 +184,7 @@ export default function BannersPage() {
   }
 
   const onDelete = async (id: string) => {
-    const confirmed = window.confirm("¿Eliminar este banner?")
+    const confirmed = window.confirm("Â¿Eliminar este banner?")
     if (!confirmed) return
 
     try {
@@ -204,7 +200,7 @@ export default function BannersPage() {
       setFeedback({ type: "ok", message: "Banner eliminado." })
       await mutate()
     } catch {
-      setFeedback({ type: "error", message: "Error de conexión." })
+      setFeedback({ type: "error", message: "Error de conexiÃ³n." })
     }
   }
 
@@ -225,7 +221,7 @@ export default function BannersPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Banners</h1>
           <p className="text-sm text-muted-foreground">
-            Gestiona banners publicitarios con programación y botón de WhatsApp.
+            Gestiona banners publicitarios con programaciÃ³n y botÃ³n de WhatsApp.
           </p>
         </div>
 
@@ -252,7 +248,7 @@ export default function BannersPage() {
           <CardContent>
             <form className="grid grid-cols-1 gap-4 lg:grid-cols-2" onSubmit={onSubmit}>
               <div className="space-y-2 lg:col-span-2">
-                <Label>Archivo (imagen o video, máximo 25 MB)</Label>
+                <Label>Archivo (imagen o video, mÃ¡ximo 25 MB)</Label>
                 <Input
                   type="file"
                   accept="image/*,video/*"
@@ -265,7 +261,7 @@ export default function BannersPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Tipo de botón</Label>
+                <Label>Tipo de botÃ³n</Label>
                 <Select
                   value={form.buttonType}
                   onValueChange={(value) =>
@@ -312,12 +308,12 @@ export default function BannersPage() {
                 </div>
               ) : (
                 <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm text-primary lg:col-span-2">
-                  Este banner abrirá directamente el chat de WhatsApp: <strong>3112120708</strong>
+                  Este banner abrirÃ¡ directamente el chat de WhatsApp: <strong>3112120708</strong>
                 </div>
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="start-at">Inicio de publicación</Label>
+                <Label htmlFor="start-at">Inicio de publicaciÃ³n</Label>
                 <Input
                   id="start-at"
                   type="datetime-local"
@@ -329,7 +325,7 @@ export default function BannersPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="end-at">Fin de publicación</Label>
+                <Label htmlFor="end-at">Fin de publicaciÃ³n</Label>
                 <Input
                   id="end-at"
                   type="datetime-local"
@@ -344,7 +340,7 @@ export default function BannersPage() {
                 <div>
                   <p className="text-sm font-medium text-foreground">Banner activo</p>
                   <p className="text-xs text-muted-foreground">
-                    Si está desactivado, no se muestra en la app.
+                    Si estÃ¡ desactivado, no se muestra en la app.
                   </p>
                 </div>
                 <Switch
@@ -363,7 +359,7 @@ export default function BannersPage() {
                   onChange={(event) =>
                     setForm((current) => ({ ...current, comment: event.target.value }))
                   }
-                  placeholder="Contexto de creación o edición"
+                  placeholder="Contexto de creaciÃ³n o ediciÃ³n"
                 />
               </div>
 
@@ -450,18 +446,18 @@ export default function BannersPage() {
 
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-foreground">
-                        {banner.media_type === "image" ? "Imagen" : "Video"} · Orden {banner.sort_order}
+                        {banner.media_type === "image" ? "Imagen" : "Video"} Â· Orden {banner.sort_order}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Botón: {banner.button_type === "whatsapp" ? "WhatsApp" : "URL"}
-                        {" · "}
+                        BotÃ³n: {banner.button_type === "whatsapp" ? "WhatsApp" : "URL"}
+                        {" Â· "}
                         Destino:{" "}
                         {banner.button_type === "whatsapp"
                           ? WHATSAPP_URL
                           : banner.redirect_url || "Sin URL"}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Programación:{" "}
+                        ProgramaciÃ³n:{" "}
                         {banner.start_at
                           ? `desde ${new Date(banner.start_at).toLocaleString("es-CO")}`
                           : "sin fecha de inicio"}
@@ -503,3 +499,6 @@ export default function BannersPage() {
     </AdminShell>
   )
 }
+
+
+

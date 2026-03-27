@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { AdminShell } from "@/components/admin/admin-shell"
 import { Button } from "@/components/ui/button"
@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Loader2, Pencil, Plus, Trash2, Upload } from "lucide-react"
+import { uploadAdminFile } from "@/lib/admin-upload"
 import Image from "next/image"
 import { useMemo, useState } from "react"
 import useSWR from "swr"
@@ -71,18 +72,10 @@ export default function ProductsPage() {
     setUploading(true)
     setError("")
     try {
-      const body = new FormData()
-      body.append("file", file)
-      body.append("folder", "products")
-      const response = await fetch("/api/upload", { method: "POST", body })
-      const result = await response.json()
-      if (!response.ok) {
-        setError(result.error || "No se pudo subir la imagen.")
-        return
-      }
-      setForm((current) => ({ ...current, image_url: result.url }))
-    } catch {
-      setError("Error de conexión subiendo imagen.")
+      const url = await uploadAdminFile(file, "products")
+      setForm((current) => ({ ...current, image_url: url }))
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Error de conexión subiendo imagen.")
     } finally {
       setUploading(false)
     }
@@ -311,4 +304,7 @@ export default function ProductsPage() {
     </AdminShell>
   )
 }
+
+
+
 
