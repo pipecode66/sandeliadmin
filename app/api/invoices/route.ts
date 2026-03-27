@@ -1,7 +1,8 @@
-import { requireAdmin, requireClient } from "@/lib/auth"
-import { createAdminClient } from "@/lib/supabase/admin"
-import { createAuditLog } from "@/lib/audit-log"
 import { NextResponse } from "next/server"
+import { requireAdmin, requireClient } from "@/lib/auth"
+import { createAuditLog } from "@/lib/audit-log"
+import { ADMIN_INVOICE_SELECT, calculateInvoicePoints } from "@/lib/invoice-utils"
+import { createAdminClient } from "@/lib/supabase/admin"
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -9,10 +10,9 @@ export async function GET(request: Request) {
   const me = searchParams.get("me")
   const supabase = createAdminClient()
 
-  let query = supabase
-    .from("invoices")
-    .select("*, clients(full_name, email), issued_by:admin_users!invoices_issued_by_admin_id_fkey(full_name, email, role)")
-    .order("created_at", { ascending: false })
+  let query = supabase.from("invoices").select(ADMIN_INVOICE_SELECT).order("created_at", {
+    ascending: false,
+  })
 
   if (me === "true") {
     const client = await requireClient()
@@ -32,7 +32,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ invoices: data })
+  return NextResponse.json({ invoices: data || [] })
 }
 
 export async function POST(request: Request) {
@@ -52,7 +52,8 @@ export async function POST(request: Request) {
   }
 
   const supabase = createAdminClient()
-  const pointsEarned = amount >= 1000 ? Math.floor(amount / 1000) : 0
+  const pointsEarned = calculateInvoicePoints(amount)
+  const timestamp = new Date().toISOString()
 
   const { data: invoice, error } = await supabase
     .from("invoices")
@@ -61,14 +62,20 @@ export async function POST(request: Request) {
       invoice_number: invoiceNumber,
       amount,
       points_earned: pointsEarned,
+      source: "manual",
+      match_status: "matched",
+      imported_at: timestamp,
+      points_applied_at: timestamp,
       issued_by_admin_id: admin.admin.id,
     })
-    .select("*, clients(full_name, email), issued_by:admin_users!invoices_issued_by_admin_id_fkey(full_name, email, role)")
+    .select(ADMIN_INVOICE_SELECT)
     .single()
 
   if (error || !invoice) {
     return NextResponse.json({ error: error?.message || "No se pudo registrar la factura." }, { status: 500 })
   }
+
+  const createdInvoice = invoice as unknown as Record<string, unknown> & { id: string }
 
   let previousPoints = 0
   if (pointsEarned > 0) {
@@ -88,10 +95,10 @@ export async function POST(request: Request) {
 
   await createAuditLog({
     entityType: "invoice",
-    entityId: invoice.id,
+    entityId: createdInvoice.id,
     action: "create",
     afterData: {
-      ...invoice,
+      ...createdInvoice,
       points_added_to_client: pointsEarned,
       previous_client_points: previousPoints,
     },
@@ -99,6 +106,7 @@ export async function POST(request: Request) {
     adminUserId: admin.admin.id,
   })
 
-  return NextResponse.json({ invoice, points_earned: pointsEarned }, { status: 201 })
+  return NextResponse.json({ invoice: createdInvoice, points_earned: pointsEarned }, { status: 201 })
 }
+
 

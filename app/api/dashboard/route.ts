@@ -1,6 +1,6 @@
+import { NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/auth"
 import { createAdminClient } from "@/lib/supabase/admin"
-import { NextResponse } from "next/server"
 
 type DashboardRange = "day" | "7d" | "15d" | "30d" | "year"
 
@@ -36,6 +36,10 @@ function getDateKey(value: string) {
   return new Date(value).toISOString().split("T")[0]
 }
 
+function getInvoiceEffectiveDate(invoice: { imported_at?: string | null; created_at?: string | null }) {
+  return String(invoice.imported_at || invoice.created_at || new Date().toISOString())
+}
+
 export async function GET(request: Request) {
   const admin = await requireAdmin("caja")
   if (!admin.ok) return admin.response
@@ -62,7 +66,9 @@ export async function GET(request: Request) {
 
   let invoicesQuery = supabase
     .from("invoices")
-    .select("id, client_id, invoice_number, amount, points_earned, created_at, clients(full_name), issued_by:admin_users!invoices_issued_by_admin_id_fkey(full_name, email)")
+    .select(
+      "id, client_id, invoice_number, amount, points_earned, created_at, imported_at, source, source_invoice_id, match_status, points_applied_at, clients(full_name), issued_by:admin_users!invoices_issued_by_admin_id_fkey(full_name, email)",
+    )
     .gte("created_at", startIso)
     .lte("created_at", endIso)
 
@@ -92,7 +98,10 @@ export async function GET(request: Request) {
 
   if (invoicesResult.error || redemptionsResult.error) {
     return NextResponse.json(
-      { error: invoicesResult.error?.message || redemptionsResult.error?.message || "Error de consulta." },
+      {
+        error:
+          invoicesResult.error?.message || redemptionsResult.error?.message || "Error de consulta.",
+      },
       { status: 500 },
     )
   }
@@ -102,7 +111,10 @@ export async function GET(request: Request) {
   const pendingRedemptions = pendingResult.count || 0
 
   const pointsRedeemed = redemptions.reduce((sum, row) => sum + Number(row.points_spent || 0), 0)
-  const pointsEarned = invoices.reduce((sum, row) => sum + Number(row.points_earned || 0), 0)
+  const pointsEarned = invoices.reduce(
+    (sum, row) => sum + (row.points_applied_at ? Number(row.points_earned || 0) : 0),
+    0,
+  )
   const amountInvoiced = invoices.reduce((sum, row) => sum + Number(row.amount || 0), 0)
 
   const chartMap: Record<string, { pointsRedeemed: number; pointsEarned: number; invoices: number }> = {}
@@ -114,10 +126,12 @@ export async function GET(request: Request) {
   }
 
   invoices.forEach((invoice) => {
-    const key = getDateKey(String(invoice.created_at))
+    const key = getDateKey(getInvoiceEffectiveDate(invoice))
     if (!chartMap[key]) chartMap[key] = { pointsRedeemed: 0, pointsEarned: 0, invoices: 0 }
-    chartMap[key].pointsEarned += Number(invoice.points_earned || 0)
     chartMap[key].invoices += 1
+    if (invoice.points_applied_at) {
+      chartMap[key].pointsEarned += Number(invoice.points_earned || 0)
+    }
   })
 
   redemptions.forEach((redemption) => {
@@ -180,4 +194,3 @@ export async function GET(request: Request) {
     recentRedemptions: redemptions.slice(0, 10),
   })
 }
-

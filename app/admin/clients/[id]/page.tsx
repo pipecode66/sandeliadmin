@@ -11,6 +11,7 @@ import {
   XCircle,
 } from "lucide-react"
 import { AdminShell } from "@/components/admin/admin-shell"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -23,7 +24,7 @@ const fetcher = async (url: string) => {
   const response = await fetch(url)
   const data = await response.json()
   if (!response.ok) {
-    throw new Error(data.error || "No se pudo cargar la información.")
+    throw new Error(data.error || "No se pudo cargar la informacion.")
   }
   return data
 }
@@ -51,6 +52,13 @@ type ClientPayload = {
     amount: number
     points_earned: number
     created_at: string
+    imported_at?: string | null
+    source?: "manual" | "vectorpos" | null
+    source_invoice_id?: string | null
+    source_client_phone?: string | null
+    source_client_name?: string | null
+    match_status?: "matched" | "unmatched" | "duplicate" | null
+    points_applied_at?: string | null
     issued_by?: { full_name?: string; email?: string; role?: string }
   }[]
   redemptions: {
@@ -73,6 +81,11 @@ type AuditLog = {
   after_data: unknown
   created_at: string
   admin_users?: { full_name?: string; email?: string; role?: string }
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return "-"
+  return new Date(value).toLocaleString("es-CO")
 }
 
 export default function ClientDetailPage() {
@@ -157,19 +170,19 @@ export default function ClientDetailPage() {
       if (!response.ok) {
         setFeedback({
           type: "error",
-          message: result.error || "No se pudo validar el código.",
+          message: result.error || "No se pudo validar el codigo.",
         })
       } else {
         setFeedback({
           type: "ok",
-          message: `Código validado. Se descontaron ${result.pointsDeducted} puntos.`,
+          message: `Codigo validado. Se descontaron ${result.pointsDeducted} puntos.`,
         })
         setCode("")
         setValidateComment("")
         await Promise.all([mutate(), mutateAudit()])
       }
     } catch {
-      setFeedback({ type: "error", message: "Error de conexión." })
+      setFeedback({ type: "error", message: "Error de conexion." })
     } finally {
       setLoadingValidate(false)
     }
@@ -194,10 +207,10 @@ export default function ClientDetailPage() {
         return
       }
       setProfileComment("")
-      setFeedback({ type: "ok", message: "Información del cliente actualizada." })
+      setFeedback({ type: "ok", message: "Informacion del cliente actualizada." })
       await Promise.all([mutate(), mutateAudit()])
     } catch {
-      setFeedback({ type: "error", message: "Error de conexión." })
+      setFeedback({ type: "error", message: "Error de conexion." })
     } finally {
       setSavingProfile(false)
     }
@@ -227,10 +240,10 @@ export default function ClientDetailPage() {
         return
       }
       setPointsComment("")
-      setFeedback({ type: "ok", message: "Puntos y límite diario actualizados." })
+      setFeedback({ type: "ok", message: "Puntos y limite diario actualizados." })
       await Promise.all([mutate(), mutateAudit()])
     } catch {
-      setFeedback({ type: "error", message: "Error de conexión." })
+      setFeedback({ type: "error", message: "Error de conexion." })
     } finally {
       setSavingPoints(false)
     }
@@ -245,21 +258,21 @@ export default function ClientDetailPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           reset_daily_limit: true,
-          comment: pointsComment || "Reinicio manual del límite diario.",
+          comment: pointsComment || "Reinicio manual del limite diario.",
         }),
       })
       const result = await response.json()
       if (!response.ok) {
         setFeedback({
           type: "error",
-          message: result.error || "No se pudo reiniciar el límite.",
+          message: result.error || "No se pudo reiniciar el limite.",
         })
         return
       }
-      setFeedback({ type: "ok", message: "Límite diario reiniciado correctamente." })
+      setFeedback({ type: "ok", message: "Limite diario reiniciado correctamente." })
       await Promise.all([mutate(), mutateAudit()])
     } catch {
-      setFeedback({ type: "error", message: "Error de conexión." })
+      setFeedback({ type: "error", message: "Error de conexion." })
     } finally {
       setSavingPoints(false)
     }
@@ -279,14 +292,14 @@ export default function ClientDetailPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Detalle de cliente</h1>
           <p className="text-sm text-muted-foreground">
-            Edita información general, contraseña, puntos, límites y trazabilidad completa.
+            Edita informacion general, contrasena, puntos, limites y trazabilidad completa.
           </p>
         </div>
 
         {isLoading ? (
           <Card>
             <CardContent className="py-10 text-center text-sm text-muted-foreground">
-              Cargando información...
+              Cargando informacion...
             </CardContent>
           </Card>
         ) : !data?.client ? (
@@ -300,7 +313,7 @@ export default function ClientDetailPage() {
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <Card>
                 <CardHeader>
-                  <CardTitle>Información general</CardTitle>
+                  <CardTitle>Informacion general</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -318,7 +331,7 @@ export default function ClientDetailPage() {
                     </div>
 
                     <div className="space-y-1">
-                      <Label>Código cliente</Label>
+                      <Label>Codigo cliente</Label>
                       <Input value={data.client.user_code} disabled />
                     </div>
 
@@ -333,7 +346,7 @@ export default function ClientDetailPage() {
                     </div>
 
                     <div className="space-y-1">
-                      <Label>Teléfono</Label>
+                      <Label>Telefono</Label>
                       <Input
                         value={profileForm.phone}
                         onChange={(event) =>
@@ -343,7 +356,7 @@ export default function ClientDetailPage() {
                     </div>
 
                     <div className="space-y-1">
-                      <Label>Dirección</Label>
+                      <Label>Direccion</Label>
                       <Input
                         value={profileForm.address}
                         onChange={(event) =>
@@ -370,7 +383,7 @@ export default function ClientDetailPage() {
                   </div>
 
                   <div className="space-y-1">
-                    <Label>Contraseña del cliente</Label>
+                    <Label>Contrasena del cliente</Label>
                     <Input
                       value={profileForm.password_plain}
                       onChange={(event) =>
@@ -379,15 +392,15 @@ export default function ClientDetailPage() {
                           password_plain: event.target.value,
                         }))
                       }
-                      placeholder="Déjala vacía para limpiar la contraseña"
+                      placeholder="Dejala vacia para limpiar la contrasena"
                     />
                   </div>
 
                   <div className="flex items-center justify-between rounded-lg border p-3">
                     <div>
-                      <p className="text-sm font-medium text-foreground">Exceder límite diario</p>
+                      <p className="text-sm font-medium text-foreground">Exceder limite diario</p>
                       <p className="text-xs text-muted-foreground">
-                        Si está activo, el cliente puede canjear por encima del límite diario.
+                        Si esta activo, el cliente puede canjear por encima del limite diario.
                       </p>
                     </div>
                     <Switch
@@ -402,24 +415,24 @@ export default function ClientDetailPage() {
                   </div>
 
                   <div className="space-y-1">
-                    <Label>Comentario de edición</Label>
+                    <Label>Comentario de edicion</Label>
                     <Textarea
                       value={profileComment}
                       onChange={(event) => setProfileComment(event.target.value)}
-                      placeholder="Motivo de la modificación"
+                      placeholder="Motivo de la modificacion"
                     />
                   </div>
 
                   <Button onClick={onSaveProfile} disabled={savingProfile}>
                     {savingProfile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Guardar información
+                    Guardar informacion
                   </Button>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Puntos y límite diario</CardTitle>
+                  <CardTitle>Puntos y limite diario</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -454,11 +467,9 @@ export default function ClientDetailPage() {
 
                   <div className="flex items-center justify-between rounded-lg border p-3">
                     <div>
-                      <p className="text-sm font-medium text-foreground">
-                        Override de límite
-                      </p>
+                      <p className="text-sm font-medium text-foreground">Override de limite</p>
                       <p className="text-xs text-muted-foreground">
-                        Permite exceder el límite de canje para este cliente.
+                        Permite exceder el limite de canje para este cliente.
                       </p>
                     </div>
                     <Switch
@@ -477,7 +488,7 @@ export default function ClientDetailPage() {
                     <Textarea
                       value={pointsComment}
                       onChange={(event) => setPointsComment(event.target.value)}
-                      placeholder="Explica por qué modificas puntos o límite"
+                      placeholder="Explica por que modificas puntos o limite"
                     />
                   </div>
 
@@ -487,7 +498,7 @@ export default function ClientDetailPage() {
                       Guardar puntos
                     </Button>
                     <Button variant="outline" onClick={onResetDailyLimit} disabled={savingPoints}>
-                      Reiniciar límite diario
+                      Reiniciar limite diario
                     </Button>
                   </div>
                 </CardContent>
@@ -498,13 +509,13 @@ export default function ClientDetailPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <ShieldCheck className="h-4 w-4 text-primary" />
-                  Validar redención
+                  Validar redencion
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <div className="flex-1">
-                    <Label htmlFor="code">Código</Label>
+                    <Label htmlFor="code">Codigo</Label>
                     <Input
                       id="code"
                       value={code}
@@ -519,17 +530,17 @@ export default function ClientDetailPage() {
                       disabled={loadingValidate || !code.trim()}
                     >
                       {loadingValidate && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Validar código
+                      Validar codigo
                     </Button>
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <Label>Comentario de validación</Label>
+                  <Label>Comentario de validacion</Label>
                   <Textarea
                     value={validateComment}
                     onChange={(event) => setValidateComment(event.target.value)}
-                    placeholder="Detalle de la validación"
+                    placeholder="Detalle de la validacion"
                   />
                 </div>
 
@@ -553,7 +564,7 @@ export default function ClientDetailPage() {
                   </p>
                   {pendingRedemptions.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
-                      No hay códigos pendientes para este cliente.
+                      No hay codigos pendientes para este cliente.
                     </p>
                   ) : (
                     <div className="space-y-2">
@@ -567,7 +578,7 @@ export default function ClientDetailPage() {
                               {item.products?.name || "Producto"}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              Código: {item.code} · {item.points_spent} pts
+                              Codigo: {item.code} | {item.points_spent} pts
                             </p>
                           </div>
                           <div className="flex gap-2">
@@ -608,15 +619,22 @@ export default function ClientDetailPage() {
                   ) : (
                     data.invoices.map((invoice) => (
                       <div key={invoice.id} className="rounded-lg border p-3">
-                        <p className="text-sm font-medium text-foreground">
-                          Factura #{invoice.invoice_number}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-sm font-medium text-foreground">
+                            Factura #{invoice.source_invoice_id || invoice.invoice_number}
+                          </p>
+                          <Badge variant={invoice.source === "vectorpos" ? "secondary" : "outline"}>
+                            {invoice.source === "vectorpos" ? "VectorPOS" : "Manual"}
+                          </Badge>
+                          <Badge variant={invoice.points_applied_at ? "default" : "outline"}>
+                            {invoice.points_applied_at ? "Aplico puntos" : "Pendiente"}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDate(invoice.imported_at || invoice.created_at)} | ${invoice.amount.toLocaleString("es-CO")} | +{invoice.points_earned} pts
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {new Date(invoice.created_at).toLocaleDateString("es-CO")} · $
-                          {invoice.amount.toLocaleString("es-CO")} · +{invoice.points_earned} pts
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Emitida por: {invoice.issued_by?.full_name || "Sin registro"}
+                          Emitida por: {invoice.issued_by?.full_name || (invoice.source === "vectorpos" ? "VectorPOS" : "Sin registro")}
                         </p>
                       </div>
                     ))
@@ -653,7 +671,7 @@ export default function ClientDetailPage() {
                           )}
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          Código {redemption.code} · {redemption.points_spent} pts
+                          Codigo {redemption.code} | {redemption.points_spent} pts
                         </p>
                         {redemption.status === "validated" && (
                           <p className="text-xs text-muted-foreground">
@@ -669,7 +687,7 @@ export default function ClientDetailPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Historial de edición</CardTitle>
+                <CardTitle>Historial de edicion</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {(auditData?.logs || []).length === 0 ? (
@@ -681,8 +699,7 @@ export default function ClientDetailPage() {
                     <div key={log.id} className="rounded-lg border p-3">
                       <p className="text-sm font-medium text-foreground">{log.action}</p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(log.created_at).toLocaleString("es-CO")} ·{" "}
-                        {log.admin_users?.full_name || "Sistema"}
+                        {new Date(log.created_at).toLocaleString("es-CO")} | {log.admin_users?.full_name || "Sistema"}
                       </p>
                       {log.comment && (
                         <p className="mt-1 rounded bg-secondary px-2 py-1 text-xs text-foreground">

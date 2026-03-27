@@ -46,8 +46,20 @@ CREATE TABLE IF NOT EXISTS invoices (
   invoice_number TEXT NOT NULL,
   amount INTEGER NOT NULL,
   points_earned INTEGER NOT NULL,
+  source TEXT NOT NULL DEFAULT 'manual' CHECK (source IN ('manual', 'vectorpos')),
+  source_invoice_id TEXT,
+  source_payload JSONB,
+  source_client_phone TEXT,
+  source_client_name TEXT,
+  match_status TEXT NOT NULL DEFAULT 'matched' CHECK (match_status IN ('matched', 'unmatched', 'duplicate')),
+  imported_at TIMESTAMPTZ,
+  points_applied_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_invoices_source_invoice_id_unique
+  ON invoices(source, source_invoice_id)
+  WHERE source_invoice_id IS NOT NULL;
 
 -- 5. Redemptions
 CREATE TABLE IF NOT EXISTS redemptions (
@@ -84,6 +96,20 @@ CREATE TABLE IF NOT EXISTS verification_codes (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 8. Integration sync state
+CREATE TABLE IF NOT EXISTS integration_sync_state (
+  provider TEXT PRIMARY KEY,
+  is_enabled BOOLEAN NOT NULL DEFAULT false,
+  start_from_invoice_id INTEGER NOT NULL DEFAULT 0,
+  last_checked_invoice_id INTEGER,
+  last_imported_invoice_id INTEGER,
+  last_run_at TIMESTAMPTZ,
+  last_error TEXT,
+  miss_streak INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Enable RLS on all tables
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
@@ -92,6 +118,7 @@ ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE redemptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE banners ENABLE ROW LEVEL SECURITY;
 ALTER TABLE verification_codes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE integration_sync_state ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies: Allow authenticated users (admin) full access
 CREATE POLICY "admin_all_categories" ON categories FOR ALL USING (true) WITH CHECK (true);
@@ -101,6 +128,7 @@ CREATE POLICY "admin_all_invoices" ON invoices FOR ALL USING (true) WITH CHECK (
 CREATE POLICY "admin_all_redemptions" ON redemptions FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "admin_all_banners" ON banners FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "admin_all_verification_codes" ON verification_codes FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "admin_all_integration_sync_state" ON integration_sync_state FOR ALL USING (true) WITH CHECK (true);
 
 -- Create storage bucket for product images and banners
 INSERT INTO storage.buckets (id, name, public) VALUES ('media', 'media', true) ON CONFLICT (id) DO NOTHING;

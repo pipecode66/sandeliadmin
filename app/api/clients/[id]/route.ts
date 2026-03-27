@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/auth"
 import { createAuditLog } from "@/lib/audit-log"
+import { CLIENT_INVOICE_SELECT } from "@/lib/invoice-utils"
 import { createAdminClient } from "@/lib/supabase/admin"
 
 export async function GET(
@@ -25,9 +26,7 @@ export async function GET(
 
   const { data: invoices } = await supabase
     .from("invoices")
-    .select(
-      "*, issued_by:admin_users!invoices_issued_by_admin_id_fkey(full_name, email, role)",
-    )
+    .select(CLIENT_INVOICE_SELECT)
     .eq("client_id", id)
     .order("created_at", { ascending: false })
 
@@ -91,7 +90,7 @@ export async function PATCH(
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json(
-      { error: "No hay campos válidos para actualizar." },
+      { error: "No hay campos validos para actualizar." },
       { status: 400 },
     )
   }

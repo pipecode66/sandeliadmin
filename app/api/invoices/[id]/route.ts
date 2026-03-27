@@ -1,6 +1,7 @@
-import { requireAdmin } from "@/lib/auth"
-import { createAdminClient } from "@/lib/supabase/admin"
 import { NextResponse } from "next/server"
+import { requireAdmin } from "@/lib/auth"
+import { ADMIN_INVOICE_SELECT } from "@/lib/invoice-utils"
+import { createAdminClient } from "@/lib/supabase/admin"
 
 export async function GET(
   _request: Request,
@@ -14,7 +15,7 @@ export async function GET(
 
   const { data, error } = await supabase
     .from("invoices")
-    .select("*, clients(full_name, email, phone)")
+    .select(ADMIN_INVOICE_SELECT)
     .eq("id", id)
     .single()
 
