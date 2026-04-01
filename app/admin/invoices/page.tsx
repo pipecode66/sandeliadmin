@@ -50,6 +50,21 @@ type VectorPosState = {
   miss_streak: number
 }
 
+type VectorPosSyncSummary = {
+  attempts: number
+  imported: number
+  duplicates: number
+  matched: number
+  unmatched: number
+  pointsApplied: number
+  missStreak: number
+  scannedFrom: number
+  scannedTo: number
+  maxAttempts: number
+  maxMissStreak: number
+  foundSourceInvoiceIds: number[]
+}
+
 const fetcher = async (url: string) => {
   const response = await fetch(url)
   const data = await response.json()
@@ -70,6 +85,19 @@ function formatDate(value?: string | null) {
 
 function getInvoiceDisplayDate(invoice: Invoice) {
   return invoice.imported_at || invoice.created_at
+}
+
+function buildSyncFeedback(summary?: VectorPosSyncSummary | null) {
+  if (!summary) {
+    return "Sincronización completada correctamente."
+  }
+
+  const foundIds =
+    summary.foundSourceInvoiceIds.length > 0
+      ? summary.foundSourceInvoiceIds.join(", ")
+      : "ninguno"
+
+  return `Sincronización completada. Rango revisado: ${summary.scannedFrom}-${summary.scannedTo}. Intentos: ${summary.attempts}/${summary.maxAttempts}. Vacíos seguidos: ${summary.missStreak}/${summary.maxMissStreak}. Nuevas: ${summary.imported}, duplicadas: ${summary.duplicates}, sin asociar: ${summary.unmatched}. IDs encontrados: ${foundIds}.`
 }
 
 export default function InvoicesPage() {
@@ -95,12 +123,15 @@ export default function InvoicesPage() {
   const [loading, setLoading] = useState(false)
   const [savingVectorPos, setSavingVectorPos] = useState(false)
   const [syncingVectorPos, setSyncingVectorPos] = useState(false)
+  const [manualSyncingVectorPos, setManualSyncingVectorPos] = useState(false)
   const [assigningInvoiceId, setAssigningInvoiceId] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<{ type: "ok" | "error"; message: string } | null>(
     null,
   )
   const [vectorPosEnabled, setVectorPosEnabled] = useState(false)
   const [startFromInvoiceId, setStartFromInvoiceId] = useState("0")
+  const [manualScanCount, setManualScanCount] = useState("100")
+  const [manualStartInvoiceId, setManualStartInvoiceId] = useState("")
   const [assignInputs, setAssignInputs] = useState<Record<string, string>>({})
   const [assignComments, setAssignComments] = useState<Record<string, string>>({})
 
@@ -115,6 +146,11 @@ export default function InvoicesPage() {
   )
   const calculatedPoints = Number(amount) >= 1000 ? Math.floor(Number(amount) / 1000) : 0
   const hasVectorPosCredentials = Boolean(vectorPosData?.has_credentials)
+  const manualScanCountNumber = Number(manualScanCount || 0)
+  const manualBlankMargin =
+    Number.isFinite(manualScanCountNumber) && manualScanCountNumber > 0
+      ? Math.max(150, manualScanCountNumber + 50)
+      : 150
 
   useEffect(() => {
     if (!vectorPosData?.state) return
@@ -210,10 +246,7 @@ export default function InvoicesPage() {
         return
       }
 
-      setFeedback({
-        type: "ok",
-        message: `Sincronización completada. Nuevas: ${result.summary.imported}, duplicadas: ${result.summary.duplicates}, sin asociar: ${result.summary.unmatched}.`,
-      })
+      setFeedback({ type: "ok", message: buildSyncFeedback(result.summary) })
       await Promise.all([mutateInvoices(), mutateVectorPos()])
     } catch {
       setFeedback({ type: "error", message: "Error de conexión." })
@@ -222,7 +255,66 @@ export default function InvoicesPage() {
     }
   }
 
+  const onRunManualVectorPosScan = async () => {
+    const scanCount = Math.floor(Number(manualScanCount || 0))
+    if (!Number.isFinite(scanCount) || scanCount <= 0) {
+      setFeedback({
+        type: "error",
+        message: "Indica una cantidad valida de escaneos manuales.",
+      })
+      return
+    }
+
+    const parsedStart =
+      manualStartInvoiceId.trim().length > 0 ? Math.floor(Number(manualStartInvoiceId)) : null
+
+    if (
+      manualStartInvoiceId.trim().length > 0 &&
+      (!Number.isFinite(parsedStart) || Number(parsedStart) < 0)
+    ) {
+      setFeedback({
+        type: "error",
+        message: "El ID inicial manual debe ser un numero entero positivo o cero.",
+      })
+      return
+    }
+
+    setManualSyncingVectorPos(true)
+    setFeedback(null)
+    try {
+      const payload: Record<string, number> = {
+        scan_count: scanCount,
+      }
+      if (parsedStart !== null) {
+        payload.start_invoice_id = parsedStart
+      }
+
+      const response = await fetch("/api/invoices/vectorpos/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      const result = await response.json()
+      if (!response.ok) {
+        setFeedback({
+          type: "error",
+          message: result.error || "No se pudo ejecutar el escaneo manual de VectorPOS.",
+        })
+        await mutateVectorPos()
+        return
+      }
+
+      setFeedback({ type: "ok", message: buildSyncFeedback(result.summary) })
+      await Promise.all([mutateInvoices(), mutateVectorPos()])
+    } catch {
+      setFeedback({ type: "error", message: "Error de conexión." })
+    } finally {
+      setManualSyncingVectorPos(false)
+    }
+  }
+
   const onAssignClient = async (invoice: Invoice) => {
+
     const selectedLabel = assignInputs[invoice.id] || ""
     const selectedClientId = clientLabels.get(selectedLabel)
 
@@ -385,7 +477,12 @@ export default function InvoicesPage() {
               <Button
                 variant="outline"
                 onClick={onSyncVectorPosNow}
-                disabled={syncingVectorPos || !vectorPosEnabled || !hasVectorPosCredentials}
+                disabled={
+                  syncingVectorPos ||
+                  manualSyncingVectorPos ||
+                  !vectorPosEnabled ||
+                  !hasVectorPosCredentials
+                }
               >
                 {syncingVectorPos ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -394,6 +491,78 @@ export default function InvoicesPage() {
                 )}
                 Importar ahora
               </Button>
+            </div>
+
+            <div className="rounded-xl border border-dashed border-border p-4">
+              <div className="flex flex-col gap-4">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Escaneo manual profundo</p>
+                  <p className="text-xs text-muted-foreground">
+                    Usa este modo cuando sospeches huecos grandes entre IDs. El margen de
+                    vacíos se calcula como <strong>escaneos + 50</strong> con mínimo de{" "}
+                    <strong>150</strong>.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <div>
+                    <Label htmlFor="manual-scan-count">Cantidad de escaneos</Label>
+                    <Input
+                      id="manual-scan-count"
+                      type="number"
+                      min={1}
+                      max={1000}
+                      value={manualScanCount}
+                      onChange={(event) => setManualScanCount(event.target.value)}
+                      className="mt-2"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="manual-start-id">ID inicial manual (opcional)</Label>
+                    <Input
+                      id="manual-start-id"
+                      type="number"
+                      min={0}
+                      value={manualStartInvoiceId}
+                      onChange={(event) => setManualStartInvoiceId(event.target.value)}
+                      className="mt-2"
+                      placeholder="Usa el siguiente ID pendiente"
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Si lo defines, el escaneo será puntual y no moverá el avance normal.
+                    </p>
+                  </div>
+                  <div className="rounded-lg border p-3">
+                    <p className="text-xs uppercase text-muted-foreground">Margen de vacíos</p>
+                    <p className="mt-2 text-lg font-semibold text-foreground">
+                      {Number.isFinite(manualBlankMargin) ? manualBlankMargin : 150}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Ejemplo: 100 escaneos permiten 150 pedidos no encontrados seguidos.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="secondary"
+                    onClick={onRunManualVectorPosScan}
+                    disabled={
+                      manualSyncingVectorPos ||
+                      syncingVectorPos ||
+                      !vectorPosEnabled ||
+                      !hasVectorPosCredentials
+                    }
+                  >
+                    {manualSyncingVectorPos ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCcw className="mr-2 h-4 w-4" />
+                    )}
+                    Ejecutar escaneo manual
+                  </Button>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

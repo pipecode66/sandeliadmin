@@ -61,6 +61,27 @@ type ImportResult =
     }
 
 const VECTORPOS_PROVIDER = "vectorpos"
+const DEFAULT_MAX_ATTEMPTS = 300
+const DEFAULT_MAX_MISS_STREAK = 150
+const MAX_MANUAL_SCAN_ATTEMPTS = 1000
+
+export type VectorPosSyncOptions = {
+  maxAttempts?: number | null
+  maxMissStreak?: number | null
+  startInvoiceId?: number | null
+}
+
+function normalizePositiveInteger(value: unknown, fallback: number, max: number) {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback
+  return Math.min(Math.floor(parsed), max)
+}
+
+function normalizeNonNegativeInteger(value: unknown) {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || parsed < 0) return null
+  return Math.floor(parsed)
+}
 
 function coerceState(row?: Partial<IntegrationSyncStateRow> | null): IntegrationSyncStateRow {
   return {
@@ -435,6 +456,7 @@ export async function assignVectorPosInvoiceClient(
 export async function runVectorPosSync(
   supabase: SupabaseClient,
   adminUserId?: string | null,
+  options?: VectorPosSyncOptions,
 ) {
   const currentState = await getVectorPosSyncState(supabase)
   if (!currentState.is_enabled) {
@@ -442,11 +464,25 @@ export async function runVectorPosSync(
   }
 
   const startedAt = new Date().toISOString()
-  let currentInvoiceId =
-    Math.max(
+  const explicitStartInvoiceId = normalizeNonNegativeInteger(options?.startInvoiceId)
+  const startInvoiceId =
+    explicitStartInvoiceId ??
+    (Math.max(
       Number(currentState.start_from_invoice_id || 0),
       Number(currentState.last_checked_invoice_id || 0),
-    ) + 1
+    ) + 1)
+  const maxAttempts = normalizePositiveInteger(
+    options?.maxAttempts,
+    DEFAULT_MAX_ATTEMPTS,
+    MAX_MANUAL_SCAN_ATTEMPTS,
+  )
+  const maxMissStreak = normalizePositiveInteger(
+    options?.maxMissStreak,
+    DEFAULT_MAX_MISS_STREAK,
+    MAX_MANUAL_SCAN_ATTEMPTS + DEFAULT_MAX_MISS_STREAK,
+  )
+
+  let currentInvoiceId = startInvoiceId
   let attempts = 0
   let missStreak = 0
   let imported = 0
@@ -455,9 +491,10 @@ export async function runVectorPosSync(
   let unmatched = 0
   let pointsApplied = 0
   let lastImportedInvoiceId = currentState.last_imported_invoice_id
+  const foundSourceInvoiceIds: number[] = []
 
   try {
-    while (attempts < 50 && missStreak < 20) {
+    while (attempts < maxAttempts && missStreak < maxMissStreak) {
       const result = await importVectorPosInvoiceById(supabase, currentInvoiceId, adminUserId)
       attempts += 1
 
@@ -469,6 +506,7 @@ export async function runVectorPosSync(
 
       missStreak = 0
       lastImportedInvoiceId = result.sourceInvoiceId
+      foundSourceInvoiceIds.push(result.sourceInvoiceId)
 
       if (result.status === "duplicate") {
         duplicates += 1
@@ -487,10 +525,20 @@ export async function runVectorPosSync(
       currentInvoiceId += 1
     }
 
+    const scannedTo = currentInvoiceId - 1
+    const lastCheckedInvoiceId =
+      explicitStartInvoiceId === null
+        ? Math.max(Number(currentState.last_checked_invoice_id || 0), scannedTo)
+        : currentState.last_checked_invoice_id
+    const safeLastImportedInvoiceId =
+      lastImportedInvoiceId === null || lastImportedInvoiceId === undefined
+        ? currentState.last_imported_invoice_id
+        : Math.max(Number(currentState.last_imported_invoice_id || 0), Number(lastImportedInvoiceId))
+
     const updatedState = await updateVectorPosSyncState(supabase, {
       provider: VECTORPOS_PROVIDER,
-      last_checked_invoice_id: currentInvoiceId - 1,
-      last_imported_invoice_id: lastImportedInvoiceId,
+      last_checked_invoice_id: lastCheckedInvoiceId,
+      last_imported_invoice_id: safeLastImportedInvoiceId,
       last_run_at: startedAt,
       last_error: null,
       miss_streak: missStreak,
@@ -506,17 +554,33 @@ export async function runVectorPosSync(
         unmatched,
         pointsApplied,
         missStreak,
+        scannedFrom: startInvoiceId,
+        scannedTo,
+        maxAttempts,
+        maxMissStreak,
+        foundSourceInvoiceIds,
         startedAt,
         endedAt: new Date().toISOString(),
       },
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Error desconocido en sincronizacion de VectorPOS."
+    const scannedTo = currentInvoiceId > 0 ? currentInvoiceId - 1 : startInvoiceId
+    const safeLastCheckedInvoiceId =
+      explicitStartInvoiceId === null
+        ? Math.max(Number(currentState.last_checked_invoice_id || 0), scannedTo)
+        : currentState.last_checked_invoice_id
 
     const updatedState = await updateVectorPosSyncState(supabase, {
       provider: VECTORPOS_PROVIDER,
-      last_checked_invoice_id: currentInvoiceId > 0 ? currentInvoiceId - 1 : currentState.last_checked_invoice_id,
-      last_imported_invoice_id: lastImportedInvoiceId,
+      last_checked_invoice_id: safeLastCheckedInvoiceId,
+      last_imported_invoice_id:
+        lastImportedInvoiceId === null || lastImportedInvoiceId === undefined
+          ? currentState.last_imported_invoice_id
+          : Math.max(
+              Number(currentState.last_imported_invoice_id || 0),
+              Number(lastImportedInvoiceId),
+            ),
       last_run_at: startedAt,
       last_error: message,
       miss_streak: missStreak,
@@ -532,6 +596,11 @@ export async function runVectorPosSync(
         unmatched,
         pointsApplied,
         missStreak,
+        scannedFrom: startInvoiceId,
+        scannedTo,
+        maxAttempts,
+        maxMissStreak,
+        foundSourceInvoiceIds,
         startedAt,
         endedAt: new Date().toISOString(),
       },

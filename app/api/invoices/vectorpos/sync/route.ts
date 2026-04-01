@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/auth"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { hasVectorPosCredentials } from "@/lib/vectorpos"
-import { runVectorPosSync } from "@/lib/vectorpos-sync"
+import { runVectorPosSync, type VectorPosSyncOptions } from "@/lib/vectorpos-sync"
 
 export const dynamic = "force-dynamic"
 
@@ -30,6 +30,68 @@ async function authorizeSync(request: Request) {
   return { ok: true as const, adminUserId: admin.admin.id }
 }
 
+function parsePositiveInteger(value: unknown) {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || parsed <= 0) return null
+  return Math.floor(parsed)
+}
+
+function parseNonNegativeInteger(value: unknown) {
+  if (value === null || value === undefined || value === "") return null
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || parsed < 0) return null
+  return Math.floor(parsed)
+}
+
+async function parseSyncOptions(request: Request): Promise<{
+  options: VectorPosSyncOptions
+  validationError?: string
+}> {
+  if (request.method !== "POST") {
+    return { options: {} }
+  }
+
+  const rawBody = await request.text()
+  if (!rawBody.trim()) {
+    return { options: {} }
+  }
+
+  let body: Record<string, unknown>
+  try {
+    body = JSON.parse(rawBody)
+  } catch {
+    return { options: {}, validationError: "El cuerpo del escaneo manual no es un JSON válido." }
+  }
+
+  const scanCount = parsePositiveInteger(body.scan_count)
+  const startInvoiceId = parseNonNegativeInteger(body.start_invoice_id)
+
+  if (body.scan_count !== undefined && scanCount === null) {
+    return { options: {}, validationError: "scan_count debe ser un número entero positivo." }
+  }
+
+  if (
+    body.start_invoice_id !== undefined &&
+    body.start_invoice_id !== null &&
+    body.start_invoice_id !== "" &&
+    startInvoiceId === null
+  ) {
+    return { options: {}, validationError: "start_invoice_id debe ser un número entero positivo o cero." }
+  }
+
+  if (scanCount === null && startInvoiceId === null) {
+    return { options: {} }
+  }
+
+  return {
+    options: {
+      startInvoiceId,
+      maxAttempts: scanCount,
+      maxMissStreak: scanCount === null ? undefined : Math.max(150, scanCount + 50),
+    },
+  }
+}
+
 async function handleSync(request: Request) {
   const auth = await authorizeSync(request)
   if (!auth.ok) return auth.response
@@ -42,8 +104,13 @@ async function handleSync(request: Request) {
   }
 
   try {
+    const parsed = await parseSyncOptions(request)
+    if (parsed.validationError) {
+      return NextResponse.json({ error: parsed.validationError }, { status: 400 })
+    }
+
     const supabase = createAdminClient()
-    const result = await runVectorPosSync(supabase, auth.adminUserId)
+    const result = await runVectorPosSync(supabase, auth.adminUserId, parsed.options)
 
     if (result.error) {
       return NextResponse.json(
