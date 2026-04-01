@@ -112,15 +112,30 @@ export default function MenuManagementPage() {
   const [savingProduct, setSavingProduct] = useState(false)
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const [uploadingProductImage, setUploadingProductImage] = useState(false)
-  const [activeCategoryFilter, setActiveCategoryFilter] = useState(ALL_CATEGORIES_VALUE)
+  const [activeSectionCategoryFilter, setActiveSectionCategoryFilter] = useState(ALL_CATEGORIES_VALUE)
+  const [activeProductCategoryFilter, setActiveProductCategoryFilter] = useState(ALL_CATEGORIES_VALUE)
 
   useEffect(() => {
-    if (activeCategoryFilter !== ALL_CATEGORIES_VALUE && categories.some((item) => item.id === activeCategoryFilter)) {
+    if (
+      activeSectionCategoryFilter !== ALL_CATEGORIES_VALUE &&
+      categories.some((item) => item.id === activeSectionCategoryFilter)
+    ) {
       return
     }
-    if (activeCategoryFilter === ALL_CATEGORIES_VALUE) return
-    setActiveCategoryFilter(ALL_CATEGORIES_VALUE)
-  }, [activeCategoryFilter, categories])
+    if (activeSectionCategoryFilter === ALL_CATEGORIES_VALUE) return
+    setActiveSectionCategoryFilter(ALL_CATEGORIES_VALUE)
+  }, [activeSectionCategoryFilter, categories])
+
+  useEffect(() => {
+    if (
+      activeProductCategoryFilter !== ALL_CATEGORIES_VALUE &&
+      categories.some((item) => item.id === activeProductCategoryFilter)
+    ) {
+      return
+    }
+    if (activeProductCategoryFilter === ALL_CATEGORIES_VALUE) return
+    setActiveProductCategoryFilter(ALL_CATEGORIES_VALUE)
+  }, [activeProductCategoryFilter, categories])
 
   useEffect(() => {
     if (sectionForm.category_id) return
@@ -145,14 +160,14 @@ export default function MenuManagementPage() {
   )
 
   const filteredSections = useMemo(() => {
-    if (activeCategoryFilter === ALL_CATEGORIES_VALUE) return sections
-    return sections.filter((section) => section.category_id === activeCategoryFilter)
-  }, [activeCategoryFilter, sections])
+    if (activeSectionCategoryFilter === ALL_CATEGORIES_VALUE) return sections
+    return sections.filter((section) => section.category_id === activeSectionCategoryFilter)
+  }, [activeSectionCategoryFilter, sections])
 
   const filteredProducts = useMemo(() => {
-    if (activeCategoryFilter === ALL_CATEGORIES_VALUE) return products
-    return products.filter((product) => product.category_id === activeCategoryFilter)
-  }, [activeCategoryFilter, products])
+    if (activeProductCategoryFilter === ALL_CATEGORIES_VALUE) return products
+    return products.filter((product) => product.category_id === activeProductCategoryFilter)
+  }, [activeProductCategoryFilter, products])
 
   const sectionOptionsForProduct = useMemo(
     () => sections.filter((section) => section.category_id === productForm.category_id),
@@ -388,29 +403,12 @@ export default function MenuManagementPage() {
   return (
     <AdminShell>
       <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+        <div className="flex flex-col gap-2">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Menu web</h1>
             <p className="text-sm text-muted-foreground">
               Administra categorias, subsecciones, productos y banners de sandelimenuapp.
             </p>
-          </div>
-
-          <div className="w-full max-w-xs space-y-2">
-            <Label>Filtrar por categoria</Label>
-            <Select value={activeCategoryFilter} onValueChange={setActiveCategoryFilter}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_CATEGORIES_VALUE}>Todas las categorias</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
         </div>
 
@@ -556,7 +554,25 @@ export default function MenuManagementPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Subsecciones</CardTitle>
+              <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                <CardTitle>Subsecciones</CardTitle>
+                <div className="w-full md:max-w-xs space-y-2">
+                  <Label>Filtrar subsecciones por categoria</Label>
+                  <Select value={activeSectionCategoryFilter} onValueChange={setActiveSectionCategoryFilter}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={ALL_CATEGORIES_VALUE}>Todas las categorias</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="space-y-3">
               {filteredSections.length === 0 ? <p className="text-sm text-muted-foreground">No hay subsecciones para este filtro.</p> : null}
@@ -656,7 +672,25 @@ export default function MenuManagementPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Productos</CardTitle>
+              <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                <CardTitle>Productos</CardTitle>
+                <div className="w-full md:max-w-xs space-y-2">
+                  <Label>Filtrar productos por categoria</Label>
+                  <Select value={activeProductCategoryFilter} onValueChange={setActiveProductCategoryFilter}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={ALL_CATEGORIES_VALUE}>Todas las categorias</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="space-y-3">
               {filteredProducts.length === 0 ? <p className="text-sm text-muted-foreground">No hay productos para este filtro.</p> : null}
