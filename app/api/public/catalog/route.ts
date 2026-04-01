@@ -13,13 +13,11 @@ export async function GET(request: Request) {
   const [categoriesResult, productsResult, bannersResult] = await Promise.all([
     supabase
       .from("categories")
-      .select("id, name, points_cost, created_at")
+      .select("id, name, created_at")
       .order("name"),
     supabase
       .from("products")
-      .select(
-        "id, name, description, image_url, category_id, points_cost, categories(name, points_cost)",
-      )
+      .select("id, name, description, image_url, category_id, points_cost, categories(name)")
       .order("created_at", { ascending: false }),
     supabase
       .from("banners")
@@ -35,7 +33,7 @@ export async function GET(request: Request) {
   if (firstError) {
     return corsJson(
       request,
-      { error: firstError.message || "No se pudo cargar el catálogo." },
+      { error: firstError.message || "No se pudo cargar el catalogo." },
       { status: 500 },
       CORS_METHODS,
     )

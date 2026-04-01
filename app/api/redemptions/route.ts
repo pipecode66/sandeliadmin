@@ -22,7 +22,7 @@ export async function POST(request: Request) {
 
   const { data: product } = await supabase
     .from("products")
-    .select("*, categories(points_cost)")
+    .select("id, points_cost")
     .eq("id", product_id)
     .single()
 
@@ -30,9 +30,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Producto no encontrado." }, { status: 404 })
   }
 
-  const pointsCost =
-    (product.categories as { points_cost?: number } | null)?.points_cost ||
-    product.points_cost
+  const pointsCost = Number(product.points_cost || 0)
 
   if (client.points < pointsCost) {
     return NextResponse.json(
@@ -51,7 +49,7 @@ export async function POST(request: Request) {
     const waitMinutes = Math.ceil((midnight.getTime() - now.getTime()) / 60000)
     return NextResponse.json(
       {
-        error: "Has alcanzado el límite diario de 60 puntos. Intenta nuevamente mañana.",
+        error: "Has alcanzado el limite diario de 60 puntos. Intenta nuevamente manana.",
         waitMinutes,
       },
       { status: 400 },

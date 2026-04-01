@@ -10,7 +10,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("categories")
-    .select("*, products(count)")
+    .select("id, name, created_at, products(count)")
     .order("name")
 
   if (error) {
@@ -25,19 +25,28 @@ export async function POST(request: Request) {
   if (!admin.ok) return admin.response
 
   const body = await request.json()
+  const name = typeof body?.name === "string" ? body.name.trim() : ""
+
+  if (!name) {
+    return NextResponse.json(
+      { error: "El nombre de la categoria es obligatorio." },
+      { status: 400 },
+    )
+  }
+
   const supabase = createAdminClient()
 
   const { data, error } = await supabase
     .from("categories")
-    .insert(body)
+    .insert({ name })
     .select()
     .single()
 
   if (error) {
     if (error.code === "23505") {
       return NextResponse.json(
-        { error: "Ya existe una categoría con ese nombre." },
-        { status: 409 }
+        { error: "Ya existe una categoria con ese nombre." },
+        { status: 409 },
       )
     }
     return NextResponse.json({ error: error.message }, { status: 500 })

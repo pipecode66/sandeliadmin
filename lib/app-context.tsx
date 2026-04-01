@@ -145,12 +145,12 @@ function mapInvoicesToPurchases(invoices: Record<string, unknown>[]): PurchaseRe
 
 function mapProducts(products: Record<string, unknown>[]): RedeemableProduct[] {
   return products.map((product) => {
-    const category = product.categories as { name?: string; points_cost?: number } | null
+    const category = product.categories as { name?: string } | null
     return {
       id: String(product.id),
       name: String(product.name || ""),
       description: String(product.description || ""),
-      pointsCost: Number(category?.points_cost || product.points_cost || 0),
+      pointsCost: Number(product.points_cost || 0),
       image: String(product.image_url || "/placeholder.jpg"),
       category: String(category?.name || "General"),
     }
@@ -389,3 +389,5 @@ export function useApp() {
 }
 
 export { isIOS }
+
+

@@ -4,18 +4,27 @@ import { NextResponse } from "next/server"
 
 export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const admin = await requireAdmin()
   if (!admin.ok) return admin.response
 
   const { id } = await params
   const body = await request.json()
+  const name = typeof body?.name === "string" ? body.name.trim() : ""
+
+  if (!name) {
+    return NextResponse.json(
+      { error: "El nombre de la categoria es obligatorio." },
+      { status: 400 },
+    )
+  }
+
   const supabase = createAdminClient()
 
   const { data, error } = await supabase
     .from("categories")
-    .update(body)
+    .update({ name })
     .eq("id", id)
     .select()
     .single()
@@ -29,7 +38,7 @@ export async function PATCH(
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const admin = await requireAdmin()
   if (!admin.ok) return admin.response
@@ -37,7 +46,6 @@ export async function DELETE(
   const { id } = await params
   const supabase = createAdminClient()
 
-  // Check if category has products
   const { count } = await supabase
     .from("products")
     .select("*", { count: "exact", head: true })
@@ -45,8 +53,8 @@ export async function DELETE(
 
   if (count && count > 0) {
     return NextResponse.json(
-      { error: "No se puede eliminar una categoría que tiene productos asociados." },
-      { status: 400 }
+      { error: "No se puede eliminar una categoria que tiene productos asociados." },
+      { status: 400 },
     )
   }
 

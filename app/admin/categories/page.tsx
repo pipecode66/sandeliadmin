@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { AdminShell } from "@/components/admin/admin-shell"
 import { Button } from "@/components/ui/button"
@@ -14,7 +14,6 @@ const fetcher = (url: string) => fetch(url).then((response) => response.json())
 type Category = {
   id: string
   name: string
-  points_cost: number
   products?: { count: number }[]
 }
 
@@ -25,7 +24,6 @@ export default function CategoriesPage() {
 
   const [editing, setEditing] = useState<Category | null>(null)
   const [name, setName] = useState("")
-  const [pointsCost, setPointsCost] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
@@ -34,7 +32,6 @@ export default function CategoriesPage() {
   const resetForm = () => {
     setEditing(null)
     setName("")
-    setPointsCost("")
     setError("")
   }
 
@@ -46,7 +43,6 @@ export default function CategoriesPage() {
     try {
       const payload = {
         name: name.trim(),
-        points_cost: Number(pointsCost),
       }
       const endpoint = editing ? `/api/categories/${editing.id}` : "/api/categories"
       const method = editing ? "PATCH" : "POST"
@@ -59,14 +55,14 @@ export default function CategoriesPage() {
       const result = await response.json()
 
       if (!response.ok) {
-        setError(result.error || "No se pudo guardar la categoría.")
+        setError(result.error || "No se pudo guardar la categoria.")
         return
       }
 
       resetForm()
       mutate()
     } catch {
-      setError("Error de conexión.")
+      setError("Error de conexion.")
     } finally {
       setLoading(false)
     }
@@ -75,17 +71,16 @@ export default function CategoriesPage() {
   const onEdit = (category: Category) => {
     setEditing(category)
     setName(category.name)
-    setPointsCost(String(category.points_cost))
     setError("")
   }
 
   const onDelete = async (id: string) => {
-    const confirmed = window.confirm("¿Eliminar categoría?")
+    const confirmed = window.confirm("Eliminar categoria?")
     if (!confirmed) return
     const response = await fetch(`/api/categories/${id}`, { method: "DELETE" })
     const result = await response.json()
     if (!response.ok) {
-      setError(result.error || "No se pudo eliminar la categoría.")
+      setError(result.error || "No se pudo eliminar la categoria.")
       return
     }
     mutate()
@@ -95,19 +90,19 @@ export default function CategoriesPage() {
     <AdminShell>
       <div className="flex flex-col gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Categorías</h1>
+          <h1 className="text-2xl font-bold text-foreground">Categorias</h1>
           <p className="text-sm text-muted-foreground">
-            Administra categorías y puntos que se descuentan por canje.
+            Administra las categorias que agrupan los productos redimibles.
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>{editing ? "Editar categoría" : "Nueva categoría"}</CardTitle>
+            <CardTitle>{editing ? "Editar categoria" : "Nueva categoria"}</CardTitle>
           </CardHeader>
           <CardContent>
-            <form className="grid grid-cols-1 gap-4 sm:grid-cols-3" onSubmit={onSubmit}>
-              <div className="space-y-2 sm:col-span-2">
+            <form className="grid grid-cols-1 gap-4" onSubmit={onSubmit}>
+              <div className="space-y-2">
                 <Label htmlFor="name">Nombre</Label>
                 <Input
                   id="name"
@@ -117,27 +112,18 @@ export default function CategoriesPage() {
                   required
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="points">Puntos</Label>
-                <Input
-                  id="points"
-                  type="number"
-                  min={1}
-                  value={pointsCost}
-                  onChange={(event) => setPointsCost(event.target.value)}
-                  placeholder="40"
-                  required
-                />
-              </div>
-              {error && <p className="text-sm text-destructive sm:col-span-3">{error}</p>}
-              <div className="flex gap-2 sm:col-span-3">
+              <p className="text-sm text-muted-foreground">
+                Los puntos ahora se asignan por producto. Esta seccion solo organiza el catalogo.
+              </p>
+              {error && <p className="text-sm text-destructive">{error}</p>}
+              <div className="flex gap-2">
                 <Button type="submit" disabled={loading}>
                   {loading ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
                     <Plus className="mr-2 h-4 w-4" />
                   )}
-                  {editing ? "Guardar cambios" : "Agregar categoría"}
+                  {editing ? "Guardar cambios" : "Agregar categoria"}
                 </Button>
                 {editing && (
                   <Button type="button" variant="outline" onClick={resetForm}>
@@ -155,7 +141,7 @@ export default function CategoriesPage() {
           </CardHeader>
           <CardContent className="space-y-2">
             {categories.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Sin categorías.</p>
+              <p className="text-sm text-muted-foreground">Sin categorias.</p>
             ) : (
               categories.map((category) => {
                 const productCount = category.products?.[0]?.count || 0
@@ -166,9 +152,7 @@ export default function CategoriesPage() {
                   >
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-foreground">{category.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {category.points_cost} pts · {productCount} productos
-                      </p>
+                      <p className="text-xs text-muted-foreground">{productCount} productos</p>
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => onEdit(category)}>
@@ -190,4 +174,3 @@ export default function CategoriesPage() {
     </AdminShell>
   )
 }
-

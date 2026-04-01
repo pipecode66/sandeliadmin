@@ -4,7 +4,6 @@
 CREATE TABLE IF NOT EXISTS categories (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT UNIQUE NOT NULL,
-  points_cost INTEGER NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

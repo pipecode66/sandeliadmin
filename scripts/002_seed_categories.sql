@@ -1,9 +1,9 @@
 -- Seed preset categories
-INSERT INTO categories (name, points_cost) VALUES
-  ('Bebidas Frias', 40),
-  ('Bebidas Calientes', 30),
-  ('Postres', 60),
-  ('Helados', 48),
-  ('Porciones de Torta', 60),
-  ('Sodas Organicas', 40)
+INSERT INTO categories (name) VALUES
+  ('Bebidas Frias'),
+  ('Bebidas Calientes'),
+  ('Postres'),
+  ('Helados'),
+  ('Porciones de Torta'),
+  ('Sodas Organicas')
 ON CONFLICT (name) DO NOTHING;

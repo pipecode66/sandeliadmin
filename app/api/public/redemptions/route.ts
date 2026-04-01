@@ -44,7 +44,7 @@ export async function POST(request: Request) {
   try {
     body = (await request.json()) as { product_id?: unknown }
   } catch {
-    return corsJson(request, { error: "JSON inválido." }, { status: 400 }, CORS_METHODS)
+    return corsJson(request, { error: "JSON invalido." }, { status: 400 }, CORS_METHODS)
   }
 
   if (!body.product_id || typeof body.product_id !== "string") {
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
 
   const { data: product } = await supabase
     .from("products")
-    .select("id, points_cost, categories(points_cost)")
+    .select("id, points_cost")
     .eq("id", body.product_id)
     .single()
 
@@ -78,9 +78,7 @@ export async function POST(request: Request) {
     return corsJson(request, { error: "Producto no encontrado." }, { status: 404 }, CORS_METHODS)
   }
 
-  const pointsCost =
-    (product.categories as { points_cost?: number } | null)?.points_cost ||
-    product.points_cost
+  const pointsCost = Number(product.points_cost || 0)
 
   if (client.points < pointsCost) {
     return corsJson(
@@ -92,8 +90,7 @@ export async function POST(request: Request) {
   }
 
   const today = new Date().toISOString().split("T")[0]
-  const currentRedeemedToday =
-    client.last_redeem_date === today ? client.redeemed_today : 0
+  const currentRedeemedToday = client.last_redeem_date === today ? client.redeemed_today : 0
 
   if (!client.daily_limit_override && currentRedeemedToday + pointsCost > 60) {
     const now = new Date()
@@ -104,7 +101,7 @@ export async function POST(request: Request) {
     return corsJson(
       request,
       {
-        error: "Has alcanzado el límite diario de 60 puntos. Intenta nuevamente mañana.",
+        error: "Has alcanzado el limite diario de 60 puntos. Intenta nuevamente manana.",
         waitMinutes,
       },
       { status: 400 },
