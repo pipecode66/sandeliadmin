@@ -18,11 +18,18 @@ function normalizeIdentifier(rawIdentifier: string) {
   }
 }
 
-function buildPhoneCandidates(rawPhone: string) {
+function normalizePhoneForLogin(rawPhone: string) {
   const digits = rawPhone.replace(/[^\d]/g, "")
-  if (!/^\d{10}$/.test(digits)) return []
+  if (/^\d{10}$/.test(digits)) return digits
+  if (/^57\d{10}$/.test(digits)) return digits.slice(2)
+  return null
+}
 
-  const candidates = new Set<string>([digits, `57${digits}`])
+function buildPhoneCandidates(rawPhone: string) {
+  const normalizedPhone = normalizePhoneForLogin(rawPhone)
+  if (!normalizedPhone) return []
+
+  const candidates = new Set<string>([normalizedPhone, `57${normalizedPhone}`])
 
   return Array.from(candidates)
 }
@@ -59,7 +66,7 @@ export async function POST(request: Request) {
     )
   }
 
-  if (!isEmail && !/^\d{10}$/.test(value)) {
+  if (!isEmail && !normalizePhoneForLogin(value)) {
     return corsJson(
       request,
       { error: "Ingresa un número de teléfono de 10 dígitos." },
