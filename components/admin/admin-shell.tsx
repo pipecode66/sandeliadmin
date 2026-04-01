@@ -63,7 +63,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     },
   )
 
-  const adminName = data?.admin?.full_name || "Administrador"
+  const adminName = data?.admin?.full_name?.trim() || "Cuenta administrativa"
   const adminRole = roleLabel[data?.admin?.role || ""] || "Administrador"
   const adminInitials = useMemo(() => {
     const parts = adminName
@@ -147,9 +147,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               </Link>
             )
           })}
-        </nav>
 
-        <div className="border-t border-border p-3">
           <button
             onClick={handleLogout}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-destructive"
@@ -157,7 +155,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             <LogOut className="h-4 w-4" />
             Cerrar sesión
           </button>
-        </div>
+        </nav>
       </aside>
 
       <div className="flex flex-1 flex-col">
@@ -182,7 +180,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             </Button>
           )}
 
-          <div className="ml-auto flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="ml-auto flex items-center gap-2 rounded-full px-2 py-1 text-left transition-colors hover:bg-secondary"
+            aria-label="Cerrar sesión desde tu perfil"
+            title="Cerrar sesión"
+          >
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
               <span className="text-xs font-bold text-primary">{adminInitials}</span>
             </div>
@@ -190,7 +194,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               <p className="text-sm font-medium text-foreground">{adminName}</p>
               <p className="text-xs text-muted-foreground">{adminRole}</p>
             </div>
-          </div>
+          </button>
         </header>
 
         <main className="flex-1 p-4 lg:p-6">{children}</main>
