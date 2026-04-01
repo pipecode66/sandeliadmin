@@ -5,11 +5,10 @@ import Image from "next/image"
 import { useApp } from "@/lib/app-context"
 import { ArrowLeft, Eye, EyeOff, Loader2, Lock } from "lucide-react"
 
-const PASSWORD_RULE =
-  "La contraseña debe tener exactamente 6 caracteres e incluir una mayuscula, un numero y un caracter especial."
+const PASSWORD_RULE = "La contraseña debe tener al menos 8 caracteres."
 
 function isValidPassword(password: string) {
-  return /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6}$/.test(password)
+  return password.length >= 8
 }
 
 export function VerificationScreen() {
@@ -55,7 +54,7 @@ export function VerificationScreen() {
       setPendingLogin(null)
       await refreshData()
     } catch {
-      setError("Error de conexion.")
+      setError("Error de conexión.")
     } finally {
       setLoading(false)
     }
@@ -90,9 +89,7 @@ export function VerificationScreen() {
         />
 
         <h2 className="mb-2 text-center text-xl font-bold text-foreground">Crea tu contraseña</h2>
-        <p className="mb-1 text-center text-sm text-muted-foreground">
-          Primer ingreso para:
-        </p>
+        <p className="mb-1 text-center text-sm text-muted-foreground">Primer ingreso para:</p>
         <p className="mb-6 text-center text-xs font-medium text-primary">{pendingLogin.displayValue}</p>
 
         <div className="mb-3 w-full rounded-xl bg-primary/5 px-3 py-2 text-xs text-primary">
@@ -112,7 +109,7 @@ export function VerificationScreen() {
             }}
             placeholder="Nueva contraseña"
             className="w-full rounded-xl border border-border bg-secondary py-3.5 pl-12 pr-12 text-foreground placeholder:text-muted-foreground/60 transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-            maxLength={6}
+            autoComplete="new-password"
           />
           <button
             type="button"
@@ -137,15 +134,13 @@ export function VerificationScreen() {
             }}
             placeholder="Confirmar contraseña"
             className="w-full rounded-xl border border-border bg-secondary py-3.5 pl-12 pr-12 text-foreground placeholder:text-muted-foreground/60 transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-            maxLength={6}
+            autoComplete="new-password"
           />
           <button
             type="button"
             onClick={() => setShowConfirmPassword((prev) => !prev)}
             className="absolute inset-y-0 right-0 flex items-center pr-4 text-muted-foreground"
-            aria-label={
-              showConfirmPassword ? "Ocultar confirmación" : "Mostrar confirmación"
-            }
+            aria-label={showConfirmPassword ? "Ocultar confirmación" : "Mostrar confirmación"}
           >
             {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
           </button>

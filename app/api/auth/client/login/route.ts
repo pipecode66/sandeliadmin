@@ -15,15 +15,9 @@ function normalizeIdentifier(rawIdentifier: string) {
 
 function buildPhoneCandidates(rawPhone: string) {
   const digits = rawPhone.replace(/[^\d]/g, "")
-  if (!digits) return []
+  if (!/^\d{10}$/.test(digits)) return []
 
-  const candidates = new Set<string>([digits])
-  if (digits.startsWith("57") && digits.length > 10) {
-    candidates.add(digits.slice(2))
-  }
-  if (digits.length === 10) {
-    candidates.add(`57${digits}`)
-  }
+  const candidates = new Set<string>([digits, `57${digits}`])
 
   return Array.from(candidates)
 }
@@ -32,12 +26,26 @@ export async function POST(request: Request) {
   const { identifier, password } = await request.json()
   if (!identifier || typeof identifier !== "string") {
     return NextResponse.json(
-      { error: "Debes enviar un correo o telefono valido." },
+      { error: "Debes enviar un correo o teléfono válido." },
       { status: 400 },
     )
   }
 
   const { isEmail, value } = normalizeIdentifier(identifier)
+  if (!value) {
+    return NextResponse.json(
+      { error: "Debes enviar un correo o teléfono válido." },
+      { status: 400 },
+    )
+  }
+
+  if (!isEmail && !/^\d{10}$/.test(value)) {
+    return NextResponse.json(
+      { error: "Ingresa un número de teléfono de 10 dígitos." },
+      { status: 400 },
+    )
+  }
+
   const supabase = createAdminClient()
 
   let client:
@@ -61,7 +69,7 @@ export async function POST(request: Request) {
 
     if (result.error || !result.data) {
       return NextResponse.json(
-        { error: "No se encontro una cuenta con esas credenciales." },
+        { error: "No se encontró una cuenta con esas credenciales." },
         { status: 404 },
       )
     }
@@ -77,7 +85,7 @@ export async function POST(request: Request) {
 
     if (result.error || !result.data || result.data.length === 0) {
       return NextResponse.json(
-        { error: "No se encontro una cuenta con esas credenciales." },
+        { error: "No se encontró una cuenta con esas credenciales." },
         { status: 404 },
       )
     }
@@ -100,13 +108,13 @@ export async function POST(request: Request) {
 
   if (!password || typeof password !== "string") {
     return NextResponse.json(
-      { error: "Ingresa tu contrasena para continuar." },
+      { error: "Ingresa tu contraseña para continuar." },
       { status: 400 },
     )
   }
 
   if (password !== client.password_plain) {
-    return NextResponse.json({ error: "Contrasena incorrecta." }, { status: 401 })
+    return NextResponse.json({ error: "Contraseña incorrecta." }, { status: 401 })
   }
 
   const cookieStore = await cookies()

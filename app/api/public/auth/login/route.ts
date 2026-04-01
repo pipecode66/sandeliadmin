@@ -20,15 +20,9 @@ function normalizeIdentifier(rawIdentifier: string) {
 
 function buildPhoneCandidates(rawPhone: string) {
   const digits = rawPhone.replace(/[^\d]/g, "")
-  if (!digits) return []
+  if (!/^\d{10}$/.test(digits)) return []
 
-  const candidates = new Set<string>([digits])
-  if (digits.startsWith("57") && digits.length > 10) {
-    candidates.add(digits.slice(2))
-  }
-  if (digits.length === 10) {
-    candidates.add(`57${digits}`)
-  }
+  const candidates = new Set<string>([digits, `57${digits}`])
 
   return Array.from(candidates)
 }
@@ -43,13 +37,13 @@ export async function POST(request: Request) {
   try {
     body = (await request.json()) as { identifier?: unknown; password?: unknown }
   } catch {
-    return corsJson(request, { error: "JSON invalido." }, { status: 400 }, CORS_METHODS)
+    return corsJson(request, { error: "JSON inválido." }, { status: 400 }, CORS_METHODS)
   }
 
   if (!body.identifier || typeof body.identifier !== "string") {
     return corsJson(
       request,
-      { error: "Debes enviar un correo o telefono valido." },
+      { error: "Debes enviar un correo o teléfono válido." },
       { status: 400 },
       CORS_METHODS,
     )
@@ -59,7 +53,16 @@ export async function POST(request: Request) {
   if (!value) {
     return corsJson(
       request,
-      { error: "Debes enviar un correo o telefono valido." },
+      { error: "Debes enviar un correo o teléfono válido." },
+      { status: 400 },
+      CORS_METHODS,
+    )
+  }
+
+  if (!isEmail && !/^\d{10}$/.test(value)) {
+    return corsJson(
+      request,
+      { error: "Ingresa un número de teléfono de 10 dígitos." },
       { status: 400 },
       CORS_METHODS,
     )
@@ -89,7 +92,7 @@ export async function POST(request: Request) {
     if (result.error || !result.data) {
       return corsJson(
         request,
-        { error: "No se encontro una cuenta con esas credenciales." },
+        { error: "No se encontró una cuenta con esas credenciales." },
         { status: 404 },
         CORS_METHODS,
       )
@@ -107,7 +110,7 @@ export async function POST(request: Request) {
     if (result.error || !result.data || result.data.length === 0) {
       return corsJson(
         request,
-        { error: "No se encontro una cuenta con esas credenciales." },
+        { error: "No se encontró una cuenta con esas credenciales." },
         { status: 404 },
         CORS_METHODS,
       )
@@ -137,7 +140,7 @@ export async function POST(request: Request) {
   if (!body.password || typeof body.password !== "string") {
     return corsJson(
       request,
-      { error: "Ingresa tu contrasena para continuar." },
+      { error: "Ingresa tu contraseña para continuar." },
       { status: 400 },
       CORS_METHODS,
     )
@@ -146,7 +149,7 @@ export async function POST(request: Request) {
   if (body.password !== client.password_plain) {
     return corsJson(
       request,
-      { error: "Contrasena incorrecta." },
+      { error: "Contraseña incorrecta." },
       { status: 401 },
       CORS_METHODS,
     )
