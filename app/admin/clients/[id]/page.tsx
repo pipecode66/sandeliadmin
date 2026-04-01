@@ -1,13 +1,14 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import useSWR from "swr"
 import {
   CheckCircle2,
   Copy,
   Loader2,
   ShieldCheck,
+  Trash2,
   XCircle,
 } from "lucide-react"
 import { AdminShell } from "@/components/admin/admin-shell"
@@ -90,12 +91,14 @@ function formatDate(value?: string | null) {
 
 export default function ClientDetailPage() {
   const params = useParams<{ id: string }>()
+  const router = useRouter()
   const clientId = params?.id
 
   const [code, setCode] = useState("")
   const [validateComment, setValidateComment] = useState("")
   const [savingProfile, setSavingProfile] = useState(false)
   const [savingPoints, setSavingPoints] = useState(false)
+  const [deletingClient, setDeletingClient] = useState(false)
   const [loadingValidate, setLoadingValidate] = useState(false)
   const [feedback, setFeedback] = useState<{ type: "ok" | "error"; message: string } | null>(
     null,
@@ -278,6 +281,39 @@ export default function ClientDetailPage() {
     }
   }
 
+  const onDeleteClient = async () => {
+    if (!clientId || !data?.client) return
+
+    const confirmed = window.confirm(
+      `Vas a eliminar a ${data.client.full_name}. Esto tambien eliminara ${data.invoices.length} facturas y ${data.redemptions.length} redenciones asociadas. Esta accion no se puede deshacer.`, 
+    )
+    if (!confirmed) return
+
+    setDeletingClient(true)
+    setFeedback(null)
+    try {
+      const response = await fetch(`/api/clients/${clientId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          comment: `Eliminacion manual desde panel. Facturas: ${data.invoices.length}. Redenciones: ${data.redemptions.length}.`,
+        }),
+      })
+      const result = await response.json()
+      if (!response.ok) {
+        setFeedback({
+          type: "error",
+          message: result.error || "No se pudo eliminar el cliente.",
+        })
+        return
+      }
+      router.push("/admin/clients")
+    } catch {
+      setFeedback({ type: "error", message: "Error de conexion eliminando cliente." })
+    } finally {
+      setDeletingClient(false)
+    }
+  }
   const copyCode = async (value: string) => {
     try {
       await navigator.clipboard.writeText(value)
@@ -289,11 +325,25 @@ export default function ClientDetailPage() {
   return (
     <AdminShell>
       <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Detalle de cliente</h1>
-          <p className="text-sm text-muted-foreground">
-            Edita informacion general, contrasena, puntos, limites y trazabilidad completa.
-          </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Detalle de cliente</h1>
+            <p className="text-sm text-muted-foreground">
+              Edita informacion general, contrasena, puntos, limites y trazabilidad completa.
+            </p>
+          </div>
+          <Button
+            variant="destructive"
+            onClick={onDeleteClient}
+            disabled={deletingClient || isLoading || !data?.client}
+          >
+            {deletingClient ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Trash2 className="mr-2 h-4 w-4" />
+            )}
+            Eliminar cliente
+          </Button>
         </div>
 
         {isLoading ? (

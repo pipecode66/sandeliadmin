@@ -54,7 +54,7 @@ const fetcher = async (url: string) => {
   const response = await fetch(url)
   const data = await response.json()
   if (!response.ok) {
-    throw new Error(data.error || "No se pudo cargar la informaciÃ³n.")
+    throw new Error(data.error || "No se pudo cargar la informacion.")
   }
   return data
 }
@@ -133,7 +133,7 @@ export default function NotificationsPage() {
     } catch (error) {
       setFeedback({
         type: "error",
-        message: error instanceof Error ? error.message : "Error de conexión subiendo imagen.",
+        message: error instanceof Error ? error.message : "Error de conexion subiendo imagen.",
       })
     } finally {
       setUploading(false)
@@ -201,7 +201,7 @@ export default function NotificationsPage() {
       if (!response.ok) {
         setFeedback({
           type: "error",
-          message: result.error || "No se pudo guardar la notificaciÃ³n.",
+          message: result.error || "No se pudo guardar la notificacion.",
         })
         return
       }
@@ -209,21 +209,21 @@ export default function NotificationsPage() {
       setFeedback({
         type: "ok",
         message: editingId
-          ? "NotificaciÃ³n actualizada correctamente."
-          : "NotificaciÃ³n creada correctamente.",
+          ? "Notificacion actualizada correctamente."
+          : "Notificacion creada correctamente.",
       })
       setEditingId(null)
       setForm(emptyForm)
       await mutate()
     } catch {
-      setFeedback({ type: "error", message: "Error de conexiÃ³n." })
+      setFeedback({ type: "error", message: "Error de conexion." })
     } finally {
       setSaving(false)
     }
   }
 
   const onDelete = async (id: string) => {
-    const confirmed = window.confirm("Â¿Eliminar esta notificaciÃ³n?")
+    const confirmed = window.confirm("Eliminar esta notificacion?")
     if (!confirmed) return
     try {
       const response = await fetch(`/api/notifications/${id}`, { method: "DELETE" })
@@ -231,18 +231,18 @@ export default function NotificationsPage() {
       if (!response.ok) {
         setFeedback({
           type: "error",
-          message: result.error || "No se pudo eliminar la notificaciÃ³n.",
+          message: result.error || "No se pudo eliminar la notificacion.",
         })
         return
       }
-      setFeedback({ type: "ok", message: "NotificaciÃ³n eliminada." })
+      setFeedback({ type: "ok", message: "Notificacion eliminada." })
       await mutate()
       if (editingId === id) {
         setEditingId(null)
         setForm(emptyForm)
       }
     } catch {
-      setFeedback({ type: "error", message: "Error de conexiÃ³n." })
+      setFeedback({ type: "error", message: "Error de conexion." })
     }
   }
 
@@ -253,12 +253,12 @@ export default function NotificationsPage() {
           <div>
             <h1 className="text-2xl font-bold text-foreground">Notificaciones</h1>
             <p className="text-sm text-muted-foreground">
-              Crea notificaciones con imagen, categorÃ­a, descripciÃ³n y programaciÃ³n por fecha.
+              Crea notificaciones con imagen, categoria, descripcion y programacion por fecha.
             </p>
           </div>
           <Button variant="outline" onClick={startCreate}>
             <CalendarClock className="mr-2 h-4 w-4" />
-            Nueva notificaciÃ³n
+            Nueva notificacion
           </Button>
         </div>
 
@@ -280,12 +280,12 @@ export default function NotificationsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>{editingId ? "Editar notificaciÃ³n" : "Crear notificaciÃ³n"}</CardTitle>
+            <CardTitle>{editingId ? "Editar notificacion" : "Crear notificacion"}</CardTitle>
           </CardHeader>
           <CardContent>
             <form className="grid grid-cols-1 gap-3 lg:grid-cols-2" onSubmit={onSubmit}>
               <div className="space-y-1">
-                <Label htmlFor="title">TÃ­tulo</Label>
+                <Label htmlFor="title">Titulo</Label>
                 <Input
                   id="title"
                   value={form.title}
@@ -297,20 +297,20 @@ export default function NotificationsPage() {
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor="category">CategorÃ­a</Label>
+                <Label htmlFor="category">Categoria</Label>
                 <Input
                   id="category"
                   value={form.category}
                   onChange={(event) =>
                     setForm((current) => ({ ...current, category: event.target.value }))
                   }
-                  placeholder="PromociÃ³n, informativa, recordatorio..."
+                  placeholder="Promocion, informativa, recordatorio..."
                   required
                 />
               </div>
 
               <div className="space-y-1 lg:col-span-2">
-                <Label htmlFor="description">DescripciÃ³n</Label>
+                <Label htmlFor="description">Descripcion</Label>
                 <Textarea
                   id="description"
                   value={form.description}
@@ -337,7 +337,7 @@ export default function NotificationsPage() {
                   <div className="relative h-40 w-full overflow-hidden rounded-lg border bg-secondary">
                     <Image
                       src={form.image_url}
-                      alt="Vista previa de notificaciÃ³n"
+                      alt="Vista previa de notificacion"
                       fill
                       className="object-cover"
                       sizes="100vw"
@@ -347,7 +347,7 @@ export default function NotificationsPage() {
               </div>
 
               <div className="space-y-1">
-                <Label>Tipo de programaciÃ³n</Label>
+                <Label>Tipo de programacion</Label>
                 <Select
                   value={form.schedule_type}
                   onValueChange={(value) =>
@@ -375,7 +375,7 @@ export default function NotificationsPage() {
                   <Label htmlFor="scheduled-at">
                     {form.schedule_type === "once"
                       ? "Fecha y hora programada"
-                      : "Inicio de programaciÃ³n"}
+                      : "Inicio de programacion"}
                   </Label>
                   <Input
                     id="scheduled-at"
@@ -390,7 +390,7 @@ export default function NotificationsPage() {
 
               {form.schedule_type === "monthly" && (
                 <div className="space-y-1">
-                  <Label htmlFor="monthly-day">DÃ­a del mes (1-31)</Label>
+                  <Label htmlFor="monthly-day">Dia del mes (1-31)</Label>
                   <Input
                     id="monthly-day"
                     type="number"
@@ -407,7 +407,7 @@ export default function NotificationsPage() {
               {form.schedule_type === "yearly" && (
                 <>
                   <div className="space-y-1">
-                    <Label htmlFor="yearly-day">DÃ­a</Label>
+                    <Label htmlFor="yearly-day">Dia</Label>
                     <Input
                       id="yearly-day"
                       type="number"
@@ -433,7 +433,7 @@ export default function NotificationsPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="yearly-year">AÃ±o (opcional)</Label>
+                    <Label htmlFor="yearly-year">Ano (opcional)</Label>
                     <Input
                       id="yearly-year"
                       type="number"
@@ -449,7 +449,7 @@ export default function NotificationsPage() {
 
               <div className="flex items-center justify-between rounded-lg border p-3 lg:col-span-2">
                 <div>
-                  <p className="text-sm font-medium text-foreground">NotificaciÃ³n activa</p>
+                  <p className="text-sm font-medium text-foreground">Notificacion activa</p>
                   <p className="text-xs text-muted-foreground">
                     Solo las notificaciones activas se entregan a los clientes.
                   </p>
@@ -470,7 +470,7 @@ export default function NotificationsPage() {
                   onChange={(event) =>
                     setForm((current) => ({ ...current, comment: event.target.value }))
                   }
-                  placeholder="Contexto para historial de ediciÃ³n"
+                  placeholder="Contexto para historial de edicion"
                 />
               </div>
 
@@ -492,12 +492,12 @@ export default function NotificationsPage() {
                   ) : (
                     <Upload className="mr-2 h-4 w-4" />
                   )}
-                  {editingId ? "Guardar cambios" : "Crear notificaciÃ³n"}
+                  {editingId ? "Guardar cambios" : "Crear notificacion"}
                 </Button>
                 {editingId && (
                   <Button type="button" variant="outline" onClick={startCreate}>
                     <X className="mr-2 h-4 w-4" />
-                    Cancelar ediciÃ³n
+                    Cancelar edicion
                   </Button>
                 )}
               </div>
@@ -543,7 +543,7 @@ export default function NotificationsPage() {
                     <p className="text-xs text-muted-foreground">{item.category}</p>
                     <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      ProgramaciÃ³n:{" "}
+                      Programacion:{" "}
                       {item.schedule_type === "immediate"
                         ? "Inmediata"
                         : item.schedule_type === "once"
@@ -551,11 +551,11 @@ export default function NotificationsPage() {
                           : item.schedule_type === "daily"
                             ? `Diaria (desde ${item.scheduled_at ? new Date(item.scheduled_at).toLocaleDateString("es-CO") : "hoy"})`
                             : item.schedule_type === "monthly"
-                              ? `Mensual (dÃ­a ${item.schedule_day || "-"})`
+                              ? `Mensual (dia ${item.schedule_day || "-"})`
                               : `Anual (${item.schedule_day || "-"} / ${item.schedule_month || "-"}${item.schedule_year ? ` / ${item.schedule_year}` : ""})`}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Estado: {item.is_active ? "Activa" : "Inactiva"} Â· Creada por{" "}
+                      Estado: {item.is_active ? "Activa" : "Inactiva"} | Creada por{" "}
                       {item.admin_users?.full_name || "Sistema"}
                     </p>
                   </div>

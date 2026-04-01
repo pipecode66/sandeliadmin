@@ -121,3 +121,59 @@ export async function PATCH(
 
   return NextResponse.json({ client: data })
 }
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const admin = await requireAdmin("gerente")
+  if (!admin.ok) return admin.response
+
+  const { id } = await params
+  const body = await request.json().catch(() => ({}))
+  const supabase = createAdminClient()
+
+  const [clientResult, invoicesResult, redemptionsResult] = await Promise.all([
+    supabase.from("clients").select("*").eq("id", id).single(),
+    supabase.from("invoices").select("id", { count: "exact", head: true }).eq("client_id", id),
+    supabase.from("redemptions").select("id", { count: "exact", head: true }).eq("client_id", id),
+  ])
+
+  if (clientResult.error || !clientResult.data) {
+    return NextResponse.json({ error: "Cliente no encontrado." }, { status: 404 })
+  }
+
+  const current = clientResult.data
+  const relatedSummary = {
+    invoices: invoicesResult.count || 0,
+    redemptions: redemptionsResult.count || 0,
+  }
+
+  const { error } = await supabase.from("clients").delete().eq("id", id)
+
+  if (error) {
+    return NextResponse.json(
+      { error: error.message || "No se pudo eliminar el cliente." },
+      { status: 500 },
+    )
+  }
+
+  await createAuditLog({
+    entityType: "client",
+    entityId: id,
+    action: "delete",
+    beforeData: {
+      ...current,
+      related_records: relatedSummary,
+    },
+    afterData: null,
+    comment: typeof body.comment === "string" ? body.comment : null,
+    adminUserId: admin.admin.id,
+  })
+
+  return NextResponse.json({
+    success: true,
+    deleted_client_id: id,
+    related_records: relatedSummary,
+  })
+}
