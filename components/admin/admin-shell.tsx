@@ -7,6 +7,7 @@ import { useMemo, useState } from "react"
 import useSWR from "swr"
 import {
   Bell,
+  BookOpen,
   ChevronLeft,
   FileText,
   Image as ImageIcon,
@@ -30,6 +31,7 @@ const navItems = [
   { href: "/admin/products", label: "Productos", icon: Package },
   { href: "/admin/categories", label: "Categorías", icon: Tags },
   { href: "/admin/banners", label: "Banners", icon: ImageIcon },
+  { href: "/admin/menu", label: "Menu Web", icon: BookOpen },
   { href: "/admin/notifications", label: "Notificaciones", icon: Bell },
   { href: "/admin/users", label: "Usuarios", icon: Users },
 ]
