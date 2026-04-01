@@ -24,7 +24,7 @@ function buildStoragePath(folder: string, fileName?: string | null, contentType?
 }
 
 export async function POST(request: Request) {
-  const admin = await requireAdmin()
+  const admin = await requireAdmin("supervisor")
   if (!admin.ok) return admin.response
 
   const supabase = createAdminClient()

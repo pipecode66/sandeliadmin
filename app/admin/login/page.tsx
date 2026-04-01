@@ -4,6 +4,7 @@ import Image from "next/image"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
+import { getAdminHomePath } from "@/lib/admin-access"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -35,7 +36,7 @@ export default function AdminLoginPage() {
         return
       }
 
-      router.push("/admin")
+      router.push(getAdminHomePath(data?.admin?.role || null))
       router.refresh()
     } catch {
       setError("Error de conexión. Intenta nuevamente.")

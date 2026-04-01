@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   let query = supabase.from("banners").select("*").order("sort_order")
 
   if (includeAll) {
-    const admin = await requireAdmin("caja")
+    const admin = await requireAdmin("supervisor")
     if (!admin.ok) return admin.response
   } else {
     query = query.eq("is_active", true)

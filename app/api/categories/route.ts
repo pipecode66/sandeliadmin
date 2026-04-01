@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { NextResponse } from "next/server"
 
 export async function GET() {
-  const admin = await requireAdmin()
+  const admin = await requireAdmin("supervisor")
   if (!admin.ok) return admin.response
 
   const supabase = createAdminClient()
@@ -21,7 +21,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const admin = await requireAdmin()
+  const admin = await requireAdmin("supervisor")
   if (!admin.ok) return admin.response
 
   const body = await request.json()

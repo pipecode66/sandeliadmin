@@ -50,7 +50,7 @@ async function validateRelations(
 }
 
 export async function GET(request: Request) {
-  const admin = await requireAdmin("caja")
+  const admin = await requireAdmin("supervisor")
   if (!admin.ok) return admin.response
 
   const { searchParams } = new URL(request.url)

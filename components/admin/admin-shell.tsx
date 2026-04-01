@@ -3,7 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import useSWR from "swr"
 import {
   Bell,
@@ -21,6 +21,8 @@ import {
   X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { canAccessAdminPath, getAdminHomePath } from "@/lib/admin-access"
+import { normalizeRole } from "@/lib/admin-roles"
 import { cn } from "@/lib/utils"
 
 const navItems = [
@@ -63,6 +65,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     },
   )
 
+  const resolvedRole = normalizeRole(data?.admin?.role)
+  const visibleNavItems = useMemo(
+    () => navItems.filter((item) => canAccessAdminPath(resolvedRole || "caja", item.href)),
+    [resolvedRole],
+  )
+  const isForbiddenPath = resolvedRole !== null && !canAccessAdminPath(resolvedRole, pathname)
+  const adminHomePath = getAdminHomePath(resolvedRole || null)
   const adminName = data?.admin?.full_name?.trim() || "Cuenta administrativa"
   const adminRole = roleLabel[data?.admin?.role || ""] || "Administrador"
   const adminInitials = useMemo(() => {
@@ -75,10 +84,27 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     return `${parts[0][0]}${parts[1][0]}`.toUpperCase()
   }, [adminName])
 
+  useEffect(() => {
+    if (!resolvedRole || !isForbiddenPath) return
+    router.replace(getAdminHomePath(resolvedRole))
+  }, [isForbiddenPath, resolvedRole, router])
+
   const handleLogout = async () => {
     await fetch("/api/auth/admin/logout", { method: "POST" })
     router.push("/admin/login")
     router.refresh()
+  }
+
+  if (isForbiddenPath) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-secondary px-4">
+        <div className="rounded-2xl border border-border bg-card px-6 py-5 text-center shadow-sm">
+          <p className="text-sm font-medium text-foreground">
+            Redirigiendo al módulo disponible para tu rol...
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -97,7 +123,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         )}
       >
         <div className="flex h-16 items-center justify-between border-b border-border px-4">
-          <Link href="/admin" className="flex items-center gap-2">
+          <Link href={adminHomePath} className="flex items-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg border border-border bg-secondary">
               <Image
                 src="/images/logoIOS.png"
@@ -124,7 +150,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav className="flex flex-1 flex-col gap-1 p-3">
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const isActive =
               item.href === "/admin"
                 ? pathname === "/admin"

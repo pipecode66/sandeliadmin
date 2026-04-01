@@ -1,11 +1,15 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { normalizeRole } from '@/lib/admin-roles'
+import { canAccessAdminPath, getAdminHomePath } from '@/lib/admin-access'
 
 type CookieToSet = {
   name: string
   value: string
   options?: Record<string, unknown>
 }
+
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'zivra@gmail.com').toLowerCase()
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -49,16 +53,49 @@ export async function updateSession(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
+  const pathname = request.nextUrl.pathname
 
   // Protect admin routes - redirect to admin login if not authenticated
   if (
-    request.nextUrl.pathname.startsWith('/admin') &&
-    !request.nextUrl.pathname.startsWith('/admin/login') &&
+    pathname.startsWith('/admin') &&
+    !pathname.startsWith('/admin/login') &&
     !user
   ) {
     const url = request.nextUrl.clone()
     url.pathname = '/admin/login'
     return NextResponse.redirect(url)
+  }
+
+  if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/login') && user) {
+    const { data: adminProfile, error } = await supabase
+      .from('admin_users')
+      .select('role, is_active')
+      .eq('auth_user_id', user.id)
+      .maybeSingle()
+
+    let role = normalizeRole(adminProfile?.role || null)
+    let isActive = Boolean(adminProfile?.is_active)
+
+    if (error && error.code !== '42P01') {
+      console.error('Error consultando permisos administrativos en middleware:', error.message)
+    }
+
+    if ((!adminProfile || !role) && (user.email || '').toLowerCase() === ADMIN_EMAIL) {
+      role = 'super_admin'
+      isActive = true
+    }
+
+    if (!role || !isActive) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/admin/login'
+      return NextResponse.redirect(url)
+    }
+
+    if (!canAccessAdminPath(role, pathname)) {
+      const url = request.nextUrl.clone()
+      url.pathname = getAdminHomePath(role)
+      return NextResponse.redirect(url)
+    }
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.
