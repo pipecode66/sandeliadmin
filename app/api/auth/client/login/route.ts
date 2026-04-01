@@ -1,31 +1,92 @@
-import { CLIENT_PUBLIC_SELECT } from "@/lib/client-fields"
+﻿import { CLIENT_PUBLIC_SELECT } from "@/lib/client-fields"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
+
+function normalizeIdentifier(rawIdentifier: string) {
+  const trimmed = rawIdentifier.trim()
+  const isEmail = trimmed.includes("@")
+
+  return {
+    isEmail,
+    value: isEmail ? trimmed.toLowerCase() : trimmed.replace(/[^\d]/g, ""),
+  }
+}
+
+function buildPhoneCandidates(rawPhone: string) {
+  const digits = rawPhone.replace(/[^\d]/g, "")
+  if (!digits) return []
+
+  const candidates = new Set<string>([digits])
+  if (digits.startsWith("57") && digits.length > 10) {
+    candidates.add(digits.slice(2))
+  }
+  if (digits.length === 10) {
+    candidates.add(`57${digits}`)
+  }
+
+  return Array.from(candidates)
+}
 
 export async function POST(request: Request) {
   const { identifier, password } = await request.json()
   if (!identifier || typeof identifier !== "string") {
     return NextResponse.json(
-      { error: "Debes enviar un correo o teléfono válido." },
+      { error: "Debes enviar un correo o telefono valido." },
       { status: 400 },
     )
   }
 
-  const normalizedIdentifier = identifier.trim()
+  const { isEmail, value } = normalizeIdentifier(identifier)
   const supabase = createAdminClient()
 
-  const { data: client, error } = await supabase
-    .from("clients")
-    .select("id, full_name, email, phone, password_plain, password_set")
-    .or(`email.eq.${normalizedIdentifier},phone.eq.${normalizedIdentifier}`)
-    .single()
+  let client:
+    | {
+        id: string
+        full_name: string
+        email: string | null
+        phone: string | null
+        password_plain: string | null
+        password_set: boolean | null
+      }
+    | null = null
 
-  if (error || !client) {
-    return NextResponse.json(
-      { error: "No se encontró una cuenta con esas credenciales." },
-      { status: 404 },
-    )
+  if (isEmail) {
+    const result = await supabase
+      .from("clients")
+      .select("id, full_name, email, phone, password_plain, password_set")
+      .ilike("email", value)
+      .limit(1)
+      .maybeSingle()
+
+    if (result.error || !result.data) {
+      return NextResponse.json(
+        { error: "No se encontro una cuenta con esas credenciales." },
+        { status: 404 },
+      )
+    }
+
+    client = result.data
+  } else {
+    const phoneCandidates = buildPhoneCandidates(value)
+    const result = await supabase
+      .from("clients")
+      .select("id, full_name, email, phone, password_plain, password_set")
+      .in("phone", phoneCandidates)
+      .limit(10)
+
+    if (result.error || !result.data || result.data.length === 0) {
+      return NextResponse.json(
+        { error: "No se encontro una cuenta con esas credenciales." },
+        { status: 404 },
+      )
+    }
+
+    client = [...result.data].sort((left, right) => {
+      const leftIndex = phoneCandidates.indexOf(String(left.phone || ""))
+      const rightIndex = phoneCandidates.indexOf(String(right.phone || ""))
+      return (leftIndex === -1 ? 999 : leftIndex) - (rightIndex === -1 ? 999 : rightIndex)
+    })[0]
   }
 
   if (!client.password_set || !client.password_plain) {
@@ -39,13 +100,13 @@ export async function POST(request: Request) {
 
   if (!password || typeof password !== "string") {
     return NextResponse.json(
-      { error: "Ingresa tu contraseña para continuar." },
+      { error: "Ingresa tu contrasena para continuar." },
       { status: 400 },
     )
   }
 
   if (password !== client.password_plain) {
-    return NextResponse.json({ error: "Contraseña incorrecta." }, { status: 401 })
+    return NextResponse.json({ error: "Contrasena incorrecta." }, { status: 401 })
   }
 
   const cookieStore = await cookies()

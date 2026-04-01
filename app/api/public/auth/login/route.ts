@@ -1,4 +1,4 @@
-import {
+﻿import {
   CLIENT_ACCESS_TOKEN_TTL_SECONDS,
   createClientAccessToken,
 } from "@/lib/client-access-token"
@@ -18,6 +18,21 @@ function normalizeIdentifier(rawIdentifier: string) {
   }
 }
 
+function buildPhoneCandidates(rawPhone: string) {
+  const digits = rawPhone.replace(/[^\d]/g, "")
+  if (!digits) return []
+
+  const candidates = new Set<string>([digits])
+  if (digits.startsWith("57") && digits.length > 10) {
+    candidates.add(digits.slice(2))
+  }
+  if (digits.length === 10) {
+    candidates.add(`57${digits}`)
+  }
+
+  return Array.from(candidates)
+}
+
 export async function OPTIONS(request: Request) {
   return corsNoContent(request, CORS_METHODS)
 }
@@ -28,13 +43,13 @@ export async function POST(request: Request) {
   try {
     body = (await request.json()) as { identifier?: unknown; password?: unknown }
   } catch {
-    return corsJson(request, { error: "JSON inválido." }, { status: 400 }, CORS_METHODS)
+    return corsJson(request, { error: "JSON invalido." }, { status: 400 }, CORS_METHODS)
   }
 
   if (!body.identifier || typeof body.identifier !== "string") {
     return corsJson(
       request,
-      { error: "Debes enviar un correo o teléfono válido." },
+      { error: "Debes enviar un correo o telefono valido." },
       { status: 400 },
       CORS_METHODS,
     )
@@ -44,7 +59,7 @@ export async function POST(request: Request) {
   if (!value) {
     return corsJson(
       request,
-      { error: "Debes enviar un correo o teléfono válido." },
+      { error: "Debes enviar un correo o telefono valido." },
       { status: 400 },
       CORS_METHODS,
     )
@@ -52,21 +67,57 @@ export async function POST(request: Request) {
 
   const supabase = createAdminClient()
 
-  let query = supabase
-    .from("clients")
-    .select("id, full_name, email, phone, password_plain, password_set")
+  let client:
+    | {
+        id: string
+        full_name: string
+        email: string | null
+        phone: string | null
+        password_plain: string | null
+        password_set: boolean | null
+      }
+    | null = null
 
-  query = isEmail ? query.ilike("email", value) : query.eq("phone", value)
+  if (isEmail) {
+    const result = await supabase
+      .from("clients")
+      .select("id, full_name, email, phone, password_plain, password_set")
+      .ilike("email", value)
+      .limit(1)
+      .maybeSingle()
 
-  const { data: client, error } = await query.limit(1).maybeSingle()
+    if (result.error || !result.data) {
+      return corsJson(
+        request,
+        { error: "No se encontro una cuenta con esas credenciales." },
+        { status: 404 },
+        CORS_METHODS,
+      )
+    }
 
-  if (error || !client) {
-    return corsJson(
-      request,
-      { error: "No se encontró una cuenta con esas credenciales." },
-      { status: 404 },
-      CORS_METHODS,
-    )
+    client = result.data
+  } else {
+    const phoneCandidates = buildPhoneCandidates(value)
+    const result = await supabase
+      .from("clients")
+      .select("id, full_name, email, phone, password_plain, password_set")
+      .in("phone", phoneCandidates)
+      .limit(10)
+
+    if (result.error || !result.data || result.data.length === 0) {
+      return corsJson(
+        request,
+        { error: "No se encontro una cuenta con esas credenciales." },
+        { status: 404 },
+        CORS_METHODS,
+      )
+    }
+
+    client = [...result.data].sort((left, right) => {
+      const leftIndex = phoneCandidates.indexOf(String(left.phone || ""))
+      const rightIndex = phoneCandidates.indexOf(String(right.phone || ""))
+      return (leftIndex === -1 ? 999 : leftIndex) - (rightIndex === -1 ? 999 : rightIndex)
+    })[0]
   }
 
   if (!client.password_set || !client.password_plain) {
@@ -86,7 +137,7 @@ export async function POST(request: Request) {
   if (!body.password || typeof body.password !== "string") {
     return corsJson(
       request,
-      { error: "Ingresa tu contraseña para continuar." },
+      { error: "Ingresa tu contrasena para continuar." },
       { status: 400 },
       CORS_METHODS,
     )
@@ -95,7 +146,7 @@ export async function POST(request: Request) {
   if (body.password !== client.password_plain) {
     return corsJson(
       request,
-      { error: "Contraseña incorrecta." },
+      { error: "Contrasena incorrecta." },
       { status: 401 },
       CORS_METHODS,
     )

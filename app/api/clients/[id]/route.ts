@@ -1,8 +1,31 @@
-import { NextResponse } from "next/server"
+﻿import { NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/auth"
 import { createAuditLog } from "@/lib/audit-log"
 import { CLIENT_INVOICE_SELECT } from "@/lib/invoice-utils"
 import { createAdminClient } from "@/lib/supabase/admin"
+
+function buildPhoneCandidates(rawPhone?: string | null) {
+  const digits = String(rawPhone || "").replace(/[^\d]/g, "")
+  if (!digits) return []
+
+  const candidates = new Set<string>([digits])
+  if (digits.startsWith("57") && digits.length > 10) {
+    candidates.add(digits.slice(2))
+  }
+  if (digits.length === 10) {
+    candidates.add(`57${digits}`)
+  }
+
+  return Array.from(candidates)
+}
+
+function normalizePhoneForStorage(rawPhone?: string | null) {
+  const candidates = buildPhoneCandidates(rawPhone)
+  if (candidates.length === 0) return ""
+
+  const localCandidate = candidates.find((item) => item.length === 10)
+  return localCandidate || candidates[0]
+}
 
 export async function GET(
   _request: Request,
@@ -69,7 +92,7 @@ export async function PATCH(
   const updates: Record<string, unknown> = {}
   if (typeof body.full_name === "string") updates.full_name = body.full_name.trim()
   if (typeof body.email === "string") updates.email = body.email.trim().toLowerCase()
-  if (typeof body.phone === "string") updates.phone = body.phone.replace(/[^\d]/g, "")
+  if (typeof body.phone === "string") updates.phone = normalizePhoneForStorage(body.phone)
   if (typeof body.address === "string") updates.address = body.address.trim()
   if (body.gender === "Femenino" || body.gender === "Masculino") updates.gender = body.gender
   if (typeof body.daily_limit_override === "boolean") {

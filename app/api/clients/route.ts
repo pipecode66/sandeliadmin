@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server"
+﻿import { NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/auth"
 import { createAuditLog } from "@/lib/audit-log"
 import { createAdminClient } from "@/lib/supabase/admin"
@@ -13,6 +13,29 @@ function generateUserCode(): string {
   const specialChar = specials.charAt(Math.floor(Math.random() * specials.length))
   const insertPos = Math.floor(Math.random() * (code.length + 1))
   return code.slice(0, insertPos) + specialChar + code.slice(insertPos)
+}
+
+function buildPhoneCandidates(rawPhone?: string | null) {
+  const digits = String(rawPhone || "").replace(/[^\d]/g, "")
+  if (!digits) return []
+
+  const candidates = new Set<string>([digits])
+  if (digits.startsWith("57") && digits.length > 10) {
+    candidates.add(digits.slice(2))
+  }
+  if (digits.length === 10) {
+    candidates.add(`57${digits}`)
+  }
+
+  return Array.from(candidates)
+}
+
+function normalizePhoneForStorage(rawPhone?: string | null) {
+  const candidates = buildPhoneCandidates(rawPhone)
+  if (candidates.length === 0) return ""
+
+  const localCandidate = candidates.find((item) => item.length === 10)
+  return localCandidate || candidates[0]
 }
 
 export async function GET(request: Request) {
@@ -58,23 +81,23 @@ export async function POST(request: Request) {
   }
 
   if (gender !== "Femenino" && gender !== "Masculino") {
-    return NextResponse.json({ error: "Género inválido." }, { status: 400 })
+    return NextResponse.json({ error: "Genero invalido." }, { status: 400 })
   }
 
   const supabase = createAdminClient()
   const userCode = generateUserCode()
-  const normalizedPhone = phone.replace(/[^\d]/g, "")
+  const normalizedPhone = normalizePhoneForStorage(phone)
 
   const { data: existingPhone } = await supabase
     .from("clients")
     .select("id")
-    .eq("phone", normalizedPhone)
+    .in("phone", buildPhoneCandidates(normalizedPhone))
     .limit(1)
     .maybeSingle()
 
   if (existingPhone) {
     return NextResponse.json(
-      { error: "Ya existe un cliente con ese número de teléfono." },
+      { error: "Ya existe un cliente con ese numero de telefono." },
       { status: 409 },
     )
   }
@@ -100,7 +123,7 @@ export async function POST(request: Request) {
   if (error) {
     if (error.code === "23505") {
       return NextResponse.json(
-        { error: "Ya existe un cliente con ese correo electrónico." },
+        { error: "Ya existe un cliente con ese correo electronico." },
         { status: 409 },
       )
     }
