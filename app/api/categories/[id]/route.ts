@@ -15,7 +15,7 @@ export async function PATCH(
 
   if (!name) {
     return NextResponse.json(
-      { error: "El nombre de la categoria es obligatorio." },
+      { error: "El nombre de la categoría es obligatorio." },
       { status: 400 },
     )
   }
@@ -53,7 +53,7 @@ export async function DELETE(
 
   if (count && count > 0) {
     return NextResponse.json(
-      { error: "No se puede eliminar una categoria que tiene productos asociados." },
+      { error: "No se puede eliminar una categoría que tiene productos asociados." },
       { status: 400 },
     )
   }

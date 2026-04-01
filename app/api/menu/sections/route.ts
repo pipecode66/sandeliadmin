@@ -41,7 +41,7 @@ export async function POST(request: Request) {
 
   if (!categoryId || !title) {
     return NextResponse.json(
-      { error: "Categoria y titulo de la subseccion son obligatorios." },
+      { error: "Categoría y título de la subsección son obligatorios." },
       { status: 400 },
     )
   }

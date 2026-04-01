@@ -17,7 +17,7 @@ export type MenuIconKey = (typeof MENU_ICON_OPTIONS)[number]["value"]
 const MENU_ICON_SET = new Set<MenuIconKey>(MENU_ICON_OPTIONS.map((option) => option.value))
 
 export const MENU_MISSING_TABLES_MESSAGE =
-  "Tablas del menu no encontradas. Ejecuta scripts/010_menu_catalog.sql."
+  "Tablas del menú no encontradas. Ejecuta scripts/010_menu_catalog.sql."
 
 export function normalizeMenuIconKey(value: unknown): MenuIconKey {
   if (typeof value === "string" && MENU_ICON_SET.has(value as MenuIconKey)) {

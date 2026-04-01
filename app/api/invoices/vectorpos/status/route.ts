@@ -38,7 +38,7 @@ export async function PATCH(request: Request) {
   const parsedStart = parseStartFromInvoiceId(body.start_from_invoice_id)
   if (Number.isNaN(parsedStart)) {
     return NextResponse.json(
-      { error: "start_from_invoice_id debe ser un numero entero positivo o cero." },
+      { error: "start_from_invoice_id debe ser un número entero positivo o cero." },
       { status: 400 },
     )
   }

@@ -39,7 +39,7 @@ export async function POST(request: Request) {
   const blurb = String(body.blurb || "").trim()
 
   if (!title) {
-    return NextResponse.json({ error: "El titulo de la categoria es obligatorio." }, { status: 400 })
+    return NextResponse.json({ error: "El título de la categoría es obligatorio." }, { status: 400 })
   }
 
   const payload = {

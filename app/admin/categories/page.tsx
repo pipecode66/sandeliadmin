@@ -55,14 +55,14 @@ export default function CategoriesPage() {
       const result = await response.json()
 
       if (!response.ok) {
-        setError(result.error || "No se pudo guardar la categoria.")
+        setError(result.error || "No se pudo guardar la categoría.")
         return
       }
 
       resetForm()
       mutate()
     } catch {
-      setError("Error de conexion.")
+      setError("Error de conexión.")
     } finally {
       setLoading(false)
     }
@@ -75,12 +75,12 @@ export default function CategoriesPage() {
   }
 
   const onDelete = async (id: string) => {
-    const confirmed = window.confirm("Eliminar categoria?")
+    const confirmed = window.confirm("¿Eliminar categoría?")
     if (!confirmed) return
     const response = await fetch(`/api/categories/${id}`, { method: "DELETE" })
     const result = await response.json()
     if (!response.ok) {
-      setError(result.error || "No se pudo eliminar la categoria.")
+      setError(result.error || "No se pudo eliminar la categoría.")
       return
     }
     mutate()
@@ -90,15 +90,15 @@ export default function CategoriesPage() {
     <AdminShell>
       <div className="flex flex-col gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Categorias</h1>
+          <h1 className="text-2xl font-bold text-foreground">Categorías</h1>
           <p className="text-sm text-muted-foreground">
-            Administra las categorias que agrupan los productos redimibles.
+            Administra las categorías que agrupan los productos redimibles.
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>{editing ? "Editar categoria" : "Nueva categoria"}</CardTitle>
+            <CardTitle>{editing ? "Editar categoría" : "Nueva categoría"}</CardTitle>
           </CardHeader>
           <CardContent>
             <form className="grid grid-cols-1 gap-4" onSubmit={onSubmit}>
@@ -113,7 +113,7 @@ export default function CategoriesPage() {
                 />
               </div>
               <p className="text-sm text-muted-foreground">
-                Los puntos ahora se asignan por producto. Esta seccion solo organiza el catalogo.
+                Los puntos ahora se asignan por producto. Esta sección solo organiza el catálogo.
               </p>
               {error && <p className="text-sm text-destructive">{error}</p>}
               <div className="flex gap-2">
@@ -123,7 +123,7 @@ export default function CategoriesPage() {
                   ) : (
                     <Plus className="mr-2 h-4 w-4" />
                   )}
-                  {editing ? "Guardar cambios" : "Agregar categoria"}
+                  {editing ? "Guardar cambios" : "Agregar categoría"}
                 </Button>
                 {editing && (
                   <Button type="button" variant="outline" onClick={resetForm}>
@@ -141,7 +141,7 @@ export default function CategoriesPage() {
           </CardHeader>
           <CardContent className="space-y-2">
             {categories.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Sin categorias.</p>
+              <p className="text-sm text-muted-foreground">Sin categorías.</p>
             ) : (
               categories.map((category) => {
                 const productCount = category.products?.[0]?.count || 0

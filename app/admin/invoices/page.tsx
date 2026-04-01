@@ -54,7 +54,7 @@ const fetcher = async (url: string) => {
   const response = await fetch(url)
   const data = await response.json()
   if (!response.ok) {
-    throw new Error(data.error || "No se pudo cargar la informacion.")
+    throw new Error(data.error || "No se pudo cargar la información.")
   }
   return data
 }
@@ -157,7 +157,7 @@ export default function InvoicesPage() {
       setFeedback({ type: "ok", message: "Factura manual registrada correctamente." })
       await mutateInvoices()
     } catch {
-      setFeedback({ type: "error", message: "Error de conexion." })
+      setFeedback({ type: "error", message: "Error de conexión." })
     } finally {
       setLoading(false)
     }
@@ -179,15 +179,15 @@ export default function InvoicesPage() {
       if (!response.ok) {
         setFeedback({
           type: "error",
-          message: result.error || "No se pudo guardar la configuracion de VectorPOS.",
+          message: result.error || "No se pudo guardar la configuración de VectorPOS.",
         })
         return
       }
 
-      setFeedback({ type: "ok", message: "Configuracion de VectorPOS actualizada." })
+      setFeedback({ type: "ok", message: "Configuración de VectorPOS actualizada." })
       await mutateVectorPos()
     } catch {
-      setFeedback({ type: "error", message: "Error de conexion." })
+      setFeedback({ type: "error", message: "Error de conexión." })
     } finally {
       setSavingVectorPos(false)
     }
@@ -212,11 +212,11 @@ export default function InvoicesPage() {
 
       setFeedback({
         type: "ok",
-        message: `Sincronizacion completada. Nuevas: ${result.summary.imported}, duplicadas: ${result.summary.duplicates}, sin asociar: ${result.summary.unmatched}.`,
+        message: `Sincronización completada. Nuevas: ${result.summary.imported}, duplicadas: ${result.summary.duplicates}, sin asociar: ${result.summary.unmatched}.`,
       })
       await Promise.all([mutateInvoices(), mutateVectorPos()])
     } catch {
-      setFeedback({ type: "error", message: "Error de conexion." })
+      setFeedback({ type: "error", message: "Error de conexión." })
     } finally {
       setSyncingVectorPos(false)
     }
@@ -262,7 +262,7 @@ export default function InvoicesPage() {
       })
       await mutateInvoices()
     } catch {
-      setFeedback({ type: "error", message: "Error de conexion." })
+      setFeedback({ type: "error", message: "Error de conexión." })
     } finally {
       setAssigningInvoiceId(null)
     }
@@ -274,7 +274,7 @@ export default function InvoicesPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Facturas</h1>
           <p className="text-sm text-muted-foreground">
-            Registra facturas manuales y sincroniza compras desde VectorPOS para sumar puntos automaticamente.
+            Registra facturas manuales y sincroniza compras desde VectorPOS para sumar puntos automáticamente.
           </p>
         </div>
 
@@ -301,7 +301,7 @@ export default function InvoicesPage() {
           <CardContent className="space-y-5">
             {!hasVectorPosCredentials && (
               <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
-                Configura <code>VECTORPOS_API_USER</code> y <code>VECTORPOS_API_KEY</code> para activar la sincronizacion.
+                Configura <code>VECTORPOS_API_USER</code> y <code>VECTORPOS_API_KEY</code> para activar la sincronización.
               </div>
             )}
 
@@ -313,19 +313,19 @@ export default function InvoicesPage() {
                 </p>
               </div>
               <div className="rounded-lg border p-4">
-                <p className="text-xs uppercase text-muted-foreground">Ultimo ID revisado</p>
+                <p className="text-xs uppercase text-muted-foreground">Último ID revisado</p>
                 <p className="mt-2 text-lg font-semibold text-foreground">
                   {vectorPosData?.state.last_checked_invoice_id ?? "-"}
                 </p>
               </div>
               <div className="rounded-lg border p-4">
-                <p className="text-xs uppercase text-muted-foreground">Ultimo ID importado</p>
+                <p className="text-xs uppercase text-muted-foreground">Último ID importado</p>
                 <p className="mt-2 text-lg font-semibold text-foreground">
                   {vectorPosData?.state.last_imported_invoice_id ?? "-"}
                 </p>
               </div>
               <div className="rounded-lg border p-4">
-                <p className="text-xs uppercase text-muted-foreground">Ultima corrida</p>
+                <p className="text-xs uppercase text-muted-foreground">Última corrida</p>
                 <p className="mt-2 text-sm font-medium text-foreground">
                   {formatDate(vectorPosData?.state.last_run_at)}
                 </p>
@@ -348,9 +348,9 @@ export default function InvoicesPage() {
               <div className="rounded-lg border p-4">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-sm font-medium text-foreground">Habilitar sincronizacion</p>
+                    <p className="text-sm font-medium text-foreground">Habilitar sincronización</p>
                     <p className="text-xs text-muted-foreground">
-                      Cuando esta activa, el sistema podra importar facturas nuevas desde VectorPOS.
+                      Cuando está activa, el sistema podrá importar facturas nuevas desde VectorPOS.
                     </p>
                   </div>
                   <Switch checked={vectorPosEnabled} onCheckedChange={setVectorPosEnabled} />
@@ -368,7 +368,7 @@ export default function InvoicesPage() {
                   className="mt-2"
                 />
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Define el ultimo comprobante existente al momento de activacion. La sincronizacion comenzara desde el siguiente ID.
+                  Define el Último comprobante existente al momento de activación. La sincronización comenzará desde el siguiente ID.
                 </p>
               </div>
             </div>
@@ -380,7 +380,7 @@ export default function InvoicesPage() {
                 ) : (
                   <Save className="mr-2 h-4 w-4" />
                 )}
-                Guardar configuracion
+                Guardar configuración
               </Button>
               <Button
                 variant="outline"
@@ -421,7 +421,7 @@ export default function InvoicesPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="invoice">Numero de factura</Label>
+                <Label htmlFor="invoice">Número de factura</Label>
                 <Input
                   id="invoice"
                   value={invoiceNumber}
@@ -478,7 +478,7 @@ export default function InvoicesPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Facturas importadas pendientes de asociacion ({unmatchedInvoices.length})</CardTitle>
+            <CardTitle>Facturas importadas pendientes de asociación ({unmatchedInvoices.length})</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {unmatchedInvoices.length === 0 ? (
@@ -494,13 +494,13 @@ export default function InvoicesPage() {
                         <p className="text-sm font-semibold text-foreground">
                           Factura VectorPOS #{invoice.source_invoice_id || invoice.invoice_number}
                         </p>
-                        <Badge variant="outline">Pendiente de asociacion</Badge>
+                        <Badge variant="outline">Pendiente de asociación</Badge>
                       </div>
                       <p className="text-xs text-muted-foreground">
                         {formatDate(getInvoiceDisplayDate(invoice))} | ${invoice.amount.toLocaleString("es-CO")} | {invoice.points_earned} pts
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Telefono externo: {invoice.source_client_phone || "Sin telefono"}
+                        Teléfono externo: {invoice.source_client_phone || "Sin teléfono"}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         Nombre externo: {invoice.source_client_name || "Sin nombre"}
@@ -513,7 +513,7 @@ export default function InvoicesPage() {
                       <Label>Buscar cliente</Label>
                       <Input
                         list={`client-options-${invoice.id}`}
-                        placeholder="Nombre | telefono | correo"
+                        placeholder="Nombre | teléfono | correo"
                         value={assignInputs[invoice.id] || ""}
                         onChange={(event) =>
                           setAssignInputs((current) => ({
@@ -532,7 +532,7 @@ export default function InvoicesPage() {
                     <div className="space-y-2">
                       <Label>Comentario (opcional)</Label>
                       <Input
-                        placeholder="Motivo de la asignacion"
+                        placeholder="Motivo de la asignación"
                         value={assignComments[invoice.id] || ""}
                         onChange={(event) =>
                           setAssignComments((current) => ({
@@ -595,7 +595,7 @@ export default function InvoicesPage() {
                         <td className="px-3 py-2">
                           {invoice.clients?.full_name || invoice.source_client_name || "-"}
                           <p className="text-xs text-muted-foreground">
-                            {invoice.clients?.phone || invoice.source_client_phone || "Sin telefono"}
+                            {invoice.clients?.phone || invoice.source_client_phone || "Sin teléfono"}
                           </p>
                         </td>
                         <td className="px-3 py-2">#{invoice.source_invoice_id || invoice.invoice_number}</td>
@@ -606,7 +606,7 @@ export default function InvoicesPage() {
                         </td>
                         <td className="px-3 py-2">
                           <Badge variant={invoice.points_applied_at ? "default" : "outline"}>
-                            {invoice.points_applied_at ? "Aplico puntos" : "Pendiente de asociacion"}
+                            {invoice.points_applied_at ? "Aplicó puntos" : "Pendiente de asociación"}
                           </Badge>
                         </td>
                         <td className="px-3 py-2 text-right">

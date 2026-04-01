@@ -41,7 +41,7 @@ async function validateRelations(
   if (section.category_id !== categoryId) {
     return {
       ok: false as const,
-      error: "La subseccion no pertenece a la categoria seleccionada.",
+      error: "La subsección no pertenece a la categoría seleccionada.",
       status: 400,
     }
   }
@@ -112,7 +112,7 @@ export async function PATCH(
   if (body.sort_order !== undefined) updates.sort_order = parseSortOrder(body.sort_order)
 
   if (typeof updates.title === "string" && !String(updates.title).trim()) {
-    return NextResponse.json({ error: "El titulo del producto es obligatorio." }, { status: 400 })
+    return NextResponse.json({ error: "El título del producto es obligatorio." }, { status: 400 })
   }
 
   const { data, error } = await supabase

@@ -41,7 +41,7 @@ async function validateRelations(
   if (section.category_id !== categoryId) {
     return {
       ok: false as const,
-      error: "La subseccion no pertenece a la categoria seleccionada.",
+      error: "La subsección no pertenece a la categoría seleccionada.",
       status: 400,
     }
   }
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
 
   if (!categoryId || !title || priceCop === null) {
     return NextResponse.json(
-      { error: "Categoria, titulo y precio valido son obligatorios." },
+      { error: "Categoría, título y precio válido son obligatorios." },
       { status: 400 },
     )
   }

@@ -50,7 +50,7 @@ export async function PATCH(
   if (body.sort_order !== undefined) updates.sort_order = parseSortOrder(body.sort_order)
 
   if (typeof updates.title === "string" && !String(updates.title).trim()) {
-    return NextResponse.json({ error: "El titulo de la categoria es obligatorio." }, { status: 400 })
+    return NextResponse.json({ error: "El título de la categoría es obligatorio." }, { status: 400 })
   }
 
   const { data, error } = await supabase

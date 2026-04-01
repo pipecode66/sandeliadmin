@@ -62,7 +62,7 @@ const fetcher = async (url: string) => {
   const response = await fetch(url)
   const data = await response.json()
   if (!response.ok) {
-    throw new Error(data.error || "No se pudo cargar el menu web.")
+    throw new Error(data.error || "No se pudo cargar el menú web.")
   }
   return data as MenuCatalogResponse
 }
@@ -249,15 +249,15 @@ export default function MenuManagementPage() {
         },
       )
 
-      if (!(await showRequestResult(response, "No se pudo guardar la categoria."))) return
+      if (!(await showRequestResult(response, "No se pudo guardar la categoría."))) return
       setFeedback({
         type: "ok",
-        message: editingCategoryId ? "Categoria actualizada." : "Categoria creada.",
+        message: editingCategoryId ? "Categoría actualizada." : "Categoría creada.",
       })
       resetCategoryForm()
       await mutate()
     } catch {
-      setFeedback({ type: "error", message: "Error de conexion guardando la categoria." })
+      setFeedback({ type: "error", message: "Error de conexión guardando la categoría." })
     } finally {
       setSavingCategory(false)
     }
@@ -281,15 +281,15 @@ export default function MenuManagementPage() {
         },
       )
 
-      if (!(await showRequestResult(response, "No se pudo guardar la subseccion."))) return
+      if (!(await showRequestResult(response, "No se pudo guardar la subsección."))) return
       setFeedback({
         type: "ok",
-        message: editingSectionId ? "Subseccion actualizada." : "Subseccion creada.",
+        message: editingSectionId ? "Subsección actualizada." : "Subsección creada.",
       })
       resetSectionForm()
       await mutate()
     } catch {
-      setFeedback({ type: "error", message: "Error de conexion guardando la subseccion." })
+      setFeedback({ type: "error", message: "Error de conexión guardando la subsección." })
     } finally {
       setSavingSection(false)
     }
@@ -324,7 +324,7 @@ export default function MenuManagementPage() {
       resetProductForm()
       await mutate()
     } catch {
-      setFeedback({ type: "error", message: "Error de conexion guardando el producto." })
+      setFeedback({ type: "error", message: "Error de conexión guardando el producto." })
     } finally {
       setSavingProduct(false)
     }
@@ -365,26 +365,26 @@ export default function MenuManagementPage() {
 
   const deleteCategory = async (category: MenuCategory) => {
     const confirmed = window.confirm(
-      `Eliminar la categoria \"${category.title}\" tambien borrara sus subsecciones y productos.`,
+      `Eliminar la categoría \"${category.title}\" también borrará sus subsecciones y productos.`,
     )
     if (!confirmed) return
 
     const response = await fetch(`/api/menu/categories/${category.id}`, { method: "DELETE" })
-    if (!(await showRequestResult(response, "No se pudo eliminar la categoria."))) return
-    setFeedback({ type: "ok", message: "Categoria eliminada." })
+    if (!(await showRequestResult(response, "No se pudo eliminar la categoría."))) return
+    setFeedback({ type: "ok", message: "Categoría eliminada." })
     if (editingCategoryId === category.id) resetCategoryForm()
     await mutate()
   }
 
   const deleteSection = async (section: MenuSection) => {
     const confirmed = window.confirm(
-      `Eliminar la subseccion \"${section.title}\" dejara sus productos en la categoria principal.`,
+      `Eliminar la subsección \"${section.title}\" dejar? sus productos en la categoría principal.`,
     )
     if (!confirmed) return
 
     const response = await fetch(`/api/menu/sections/${section.id}`, { method: "DELETE" })
-    if (!(await showRequestResult(response, "No se pudo eliminar la subseccion."))) return
-    setFeedback({ type: "ok", message: "Subseccion eliminada." })
+    if (!(await showRequestResult(response, "No se pudo eliminar la subsección."))) return
+    setFeedback({ type: "ok", message: "Subsección eliminada." })
     if (editingSectionId === section.id) resetSectionForm()
     await mutate()
   }
@@ -405,9 +405,9 @@ export default function MenuManagementPage() {
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-2">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Menu web</h1>
+            <h1 className="text-2xl font-bold text-foreground">Menú web</h1>
             <p className="text-sm text-muted-foreground">
-              Administra categorias, subsecciones, productos y banners de sandelimenuapp.
+              Administra categorías, subsecciones, productos y banners de sandelimenuapp.
             </p>
           </div>
         </div>
@@ -429,13 +429,13 @@ export default function MenuManagementPage() {
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <Card>
             <CardHeader>
-              <CardTitle>{editingCategoryId ? "Editar categoria" : "Nueva categoria"}</CardTitle>
+              <CardTitle>{editingCategoryId ? "Editar categoría" : "Nueva categoría"}</CardTitle>
             </CardHeader>
             <CardContent>
               <form className="grid gap-4" onSubmit={submitCategory}>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="category-title">Titulo</Label>
+                    <Label htmlFor="category-title">Título</Label>
                     <Input id="category-title" value={categoryForm.title} onChange={(event) => setCategoryForm((current) => ({ ...current, title: event.target.value }))} required />
                   </div>
                   <div className="space-y-2">
@@ -452,7 +452,7 @@ export default function MenuManagementPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="category-blurb">Descripcion breve</Label>
+                  <Label htmlFor="category-blurb">Descripción breve</Label>
                   <Textarea id="category-blurb" rows={3} value={categoryForm.blurb} onChange={(event) => setCategoryForm((current) => ({ ...current, blurb: event.target.value }))} />
                 </div>
 
@@ -462,12 +462,12 @@ export default function MenuManagementPage() {
                     <Input id="category-order" type="number" value={categoryForm.sort_order} onChange={(event) => setCategoryForm((current) => ({ ...current, sort_order: event.target.value }))} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Banner de categoria</Label>
+                    <Label>Banner de categoría</Label>
                     <Input type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) handleBannerUpload(file) }} />
                     {uploadingBanner ? <p className="text-xs text-muted-foreground">Subiendo banner...</p> : null}
                     {categoryForm.banner_image_url ? (
                       <div className="relative h-36 w-full overflow-hidden rounded-lg border bg-secondary">
-                        <Image src={categoryForm.banner_image_url} alt="Banner de categoria" fill className="object-cover" sizes="(max-width: 768px) 100vw, 480px" />
+                        <Image src={categoryForm.banner_image_url} alt="Banner de categoría" fill className="object-cover" sizes="(max-width: 768px) 100vw, 480px" />
                       </div>
                     ) : null}
                   </div>
@@ -476,7 +476,7 @@ export default function MenuManagementPage() {
                 <div className="flex gap-2">
                   <Button type="submit" disabled={savingCategory || uploadingBanner}>
                     {savingCategory ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    {editingCategoryId ? "Guardar categoria" : "Crear categoria"}
+                    {editingCategoryId ? "Guardar categoría" : "Crear categoría"}
                   </Button>
                   {editingCategoryId ? <Button type="button" variant="outline" onClick={resetCategoryForm}>Cancelar</Button> : null}
                 </div>
@@ -486,17 +486,17 @@ export default function MenuManagementPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Listado de categorias</CardTitle>
+              <CardTitle>Listado de categorías</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {isLoading ? <p className="text-sm text-muted-foreground">Cargando categorias...</p> : null}
-              {categories.length === 0 && !isLoading ? <p className="text-sm text-muted-foreground">No hay categorias registradas.</p> : null}
+              {isLoading ? <p className="text-sm text-muted-foreground">Cargando categorías...</p> : null}
+              {categories.length === 0 && !isLoading ? <p className="text-sm text-muted-foreground">No hay categorías registradas.</p> : null}
               {categories.map((category) => (
                 <div key={category.id} className="flex flex-col gap-3 rounded-lg border p-3">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-foreground">{category.title}</p>
-                      <p className="text-xs text-muted-foreground">{category.blurb || "Sin descripcion breve."}</p>
+                      <p className="text-xs text-muted-foreground">{category.blurb || "Sin descripción breve."}</p>
                       <p className="mt-1 text-xs text-primary">Icono: {MENU_ICON_OPTIONS.find((item) => item.value === category.icon_key)?.label || "General"} | Orden: {category.sort_order ?? 0}</p>
                     </div>
                     <div className="flex gap-2">
@@ -518,14 +518,14 @@ export default function MenuManagementPage() {
         <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
           <Card>
             <CardHeader>
-              <CardTitle>{editingSectionId ? "Editar subseccion" : "Nueva subseccion"}</CardTitle>
+              <CardTitle>{editingSectionId ? "Editar subsección" : "Nueva subsección"}</CardTitle>
             </CardHeader>
             <CardContent>
               <form className="grid gap-4" onSubmit={submitSection}>
                 <div className="space-y-2">
-                  <Label>Categoria</Label>
+                  <Label>Categoría</Label>
                   <Select value={sectionForm.category_id} onValueChange={(value) => setSectionForm((current) => ({ ...current, category_id: value }))}>
-                    <SelectTrigger><SelectValue placeholder="Selecciona una categoria" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Selecciona una categoría" /></SelectTrigger>
                     <SelectContent>
                       {categories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>{category.title}</SelectItem>
@@ -534,7 +534,7 @@ export default function MenuManagementPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="section-title">Titulo</Label>
+                  <Label htmlFor="section-title">Título</Label>
                   <Input id="section-title" value={sectionForm.title} onChange={(event) => setSectionForm((current) => ({ ...current, title: event.target.value }))} required />
                 </div>
                 <div className="space-y-2">
@@ -544,7 +544,7 @@ export default function MenuManagementPage() {
                 <div className="flex gap-2">
                   <Button type="submit" disabled={savingSection || categories.length === 0}>
                     {savingSection ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    {editingSectionId ? "Guardar subseccion" : "Crear subseccion"}
+                    {editingSectionId ? "Guardar subsección" : "Crear subsección"}
                   </Button>
                   {editingSectionId ? <Button type="button" variant="outline" onClick={resetSectionForm}>Cancelar</Button> : null}
                 </div>
@@ -557,13 +557,13 @@ export default function MenuManagementPage() {
               <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                 <CardTitle>Subsecciones</CardTitle>
                 <div className="w-full md:max-w-xs space-y-2">
-                  <Label>Filtrar subsecciones por categoria</Label>
+                  <Label>Filtrar subsecciones por categoría</Label>
                   <Select value={activeSectionCategoryFilter} onValueChange={setActiveSectionCategoryFilter}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={ALL_CATEGORIES_VALUE}>Todas las categorias</SelectItem>
+                      <SelectItem value={ALL_CATEGORIES_VALUE}>Todas las categorías</SelectItem>
                       {categories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.title}
@@ -580,7 +580,7 @@ export default function MenuManagementPage() {
                 <div key={section.id} className="flex items-start justify-between gap-3 rounded-lg border p-3">
                   <div>
                     <p className="text-sm font-semibold text-foreground">{section.title}</p>
-                    <p className="text-xs text-muted-foreground">Categoria: {categoryMap.get(section.category_id)?.title || "Sin categoria"}</p>
+                    <p className="text-xs text-muted-foreground">Categoría: {categoryMap.get(section.category_id)?.title || "Sin categoría"}</p>
                     <p className="text-xs text-primary">Orden: {section.sort_order ?? 0}</p>
                   </div>
                   <div className="flex gap-2">
@@ -602,9 +602,9 @@ export default function MenuManagementPage() {
               <form className="grid gap-4" onSubmit={submitProduct}>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label>Categoria</Label>
+                    <Label>Categoría</Label>
                     <Select value={productForm.category_id} onValueChange={(value) => setProductForm((current) => ({ ...current, category_id: value, section_id: ROOT_SECTION_VALUE }))}>
-                      <SelectTrigger><SelectValue placeholder="Selecciona una categoria" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="Selecciona una categoría" /></SelectTrigger>
                       <SelectContent>
                         {categories.map((category) => (
                           <SelectItem key={category.id} value={category.id}>{category.title}</SelectItem>
@@ -613,11 +613,11 @@ export default function MenuManagementPage() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Subseccion</Label>
+                    <Label>Subsección</Label>
                     <Select value={productForm.section_id || ROOT_SECTION_VALUE} onValueChange={(value) => setProductForm((current) => ({ ...current, section_id: value }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value={ROOT_SECTION_VALUE}>Sin subseccion</SelectItem>
+                        <SelectItem value={ROOT_SECTION_VALUE}>Sin subsección</SelectItem>
                         {sectionOptionsForProduct.map((section) => (
                           <SelectItem key={section.id} value={section.id}>{section.title}</SelectItem>
                         ))}
@@ -627,7 +627,7 @@ export default function MenuManagementPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="product-title">Titulo</Label>
+                  <Label htmlFor="product-title">Título</Label>
                   <Input id="product-title" value={productForm.title} onChange={(event) => setProductForm((current) => ({ ...current, title: event.target.value }))} required />
                 </div>
 
@@ -644,7 +644,7 @@ export default function MenuManagementPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="product-description">Descripcion</Label>
+                  <Label htmlFor="product-description">Descripción</Label>
                   <Textarea id="product-description" rows={4} value={productForm.description} onChange={(event) => setProductForm((current) => ({ ...current, description: event.target.value }))} />
                 </div>
 
@@ -675,13 +675,13 @@ export default function MenuManagementPage() {
               <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                 <CardTitle>Productos</CardTitle>
                 <div className="w-full md:max-w-xs space-y-2">
-                  <Label>Filtrar productos por categoria</Label>
+                  <Label>Filtrar productos por categoría</Label>
                   <Select value={activeProductCategoryFilter} onValueChange={setActiveProductCategoryFilter}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={ALL_CATEGORIES_VALUE}>Todas las categorias</SelectItem>
+                      <SelectItem value={ALL_CATEGORIES_VALUE}>Todas las categorías</SelectItem>
                       {categories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.title}
@@ -704,8 +704,8 @@ export default function MenuManagementPage() {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-foreground">{product.title}</p>
-                      <p className="text-xs text-muted-foreground">{product.description || "Sin descripcion."}</p>
-                      <p className="mt-1 text-xs text-primary">{formatPriceCop(product.price_cop)} | {category?.title || "Sin categoria"}{section ? ` | ${section.title}` : " | Categoria raiz"}</p>
+                      <p className="text-xs text-muted-foreground">{product.description || "Sin descripción."}</p>
+                      <p className="mt-1 text-xs text-primary">{formatPriceCop(product.price_cop)} | {category?.title || "Sin categoría"}{section ? ` | ${section.title}` : " | Categoría raiz"}</p>
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => editProduct(product)}><Pencil className="mr-1 h-3.5 w-3.5" />Editar</Button>

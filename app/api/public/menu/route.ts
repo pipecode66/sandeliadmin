@@ -29,7 +29,7 @@ export async function GET() {
 
   if (firstError) {
     const message = isMissingMenuTablesError(firstError)
-      ? "Catalogo del menu no disponible todavia."
+      ? "Catálogo del menú no disponible todavía."
       : firstError.message
 
     return withCors(NextResponse.json({ error: message }, { status: 500 }))

@@ -25,7 +25,7 @@ const fetcher = async (url: string) => {
   const response = await fetch(url)
   const data = await response.json()
   if (!response.ok) {
-    throw new Error(data.error || "No se pudo cargar la informacion.")
+    throw new Error(data.error || "No se pudo cargar la información.")
   }
   return data
 }
@@ -173,19 +173,19 @@ export default function ClientDetailPage() {
       if (!response.ok) {
         setFeedback({
           type: "error",
-          message: result.error || "No se pudo validar el codigo.",
+          message: result.error || "No se pudo validar el código.",
         })
       } else {
         setFeedback({
           type: "ok",
-          message: `Codigo validado. Se descontaron ${result.pointsDeducted} puntos.`,
+          message: `Código validado. Se descontaron ${result.pointsDeducted} puntos.`,
         })
         setCode("")
         setValidateComment("")
         await Promise.all([mutate(), mutateAudit()])
       }
     } catch {
-      setFeedback({ type: "error", message: "Error de conexion." })
+      setFeedback({ type: "error", message: "Error de conexión." })
     } finally {
       setLoadingValidate(false)
     }
@@ -210,10 +210,10 @@ export default function ClientDetailPage() {
         return
       }
       setProfileComment("")
-      setFeedback({ type: "ok", message: "Informacion del cliente actualizada." })
+      setFeedback({ type: "ok", message: "Información del cliente actualizada." })
       await Promise.all([mutate(), mutateAudit()])
     } catch {
-      setFeedback({ type: "error", message: "Error de conexion." })
+      setFeedback({ type: "error", message: "Error de conexión." })
     } finally {
       setSavingProfile(false)
     }
@@ -243,10 +243,10 @@ export default function ClientDetailPage() {
         return
       }
       setPointsComment("")
-      setFeedback({ type: "ok", message: "Puntos y limite diario actualizados." })
+      setFeedback({ type: "ok", message: "Puntos y límite diario actualizados." })
       await Promise.all([mutate(), mutateAudit()])
     } catch {
-      setFeedback({ type: "error", message: "Error de conexion." })
+      setFeedback({ type: "error", message: "Error de conexión." })
     } finally {
       setSavingPoints(false)
     }
@@ -261,21 +261,21 @@ export default function ClientDetailPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           reset_daily_limit: true,
-          comment: pointsComment || "Reinicio manual del limite diario.",
+          comment: pointsComment || "Reinicio manual del límite diario.",
         }),
       })
       const result = await response.json()
       if (!response.ok) {
         setFeedback({
           type: "error",
-          message: result.error || "No se pudo reiniciar el limite.",
+          message: result.error || "No se pudo reiniciar el límite.",
         })
         return
       }
-      setFeedback({ type: "ok", message: "Limite diario reiniciado correctamente." })
+      setFeedback({ type: "ok", message: "Límite diario reiniciado correctamente." })
       await Promise.all([mutate(), mutateAudit()])
     } catch {
-      setFeedback({ type: "error", message: "Error de conexion." })
+      setFeedback({ type: "error", message: "Error de conexión." })
     } finally {
       setSavingPoints(false)
     }
@@ -285,7 +285,7 @@ export default function ClientDetailPage() {
     if (!clientId || !data?.client) return
 
     const confirmed = window.confirm(
-      `Vas a eliminar a ${data.client.full_name}. Esto tambien eliminara ${data.invoices.length} facturas y ${data.redemptions.length} redenciones asociadas. Esta accion no se puede deshacer.`, 
+      `Vas a eliminar a ${data.client.full_name}. Esto también eliminará ${data.invoices.length} facturas y ${data.redemptions.length} redenciones asociadas. Esta acción no se puede deshacer.`, 
     )
     if (!confirmed) return
 
@@ -296,7 +296,7 @@ export default function ClientDetailPage() {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          comment: `Eliminacion manual desde panel. Facturas: ${data.invoices.length}. Redenciones: ${data.redemptions.length}.`,
+          comment: `Eliminación manual desde panel. Facturas: ${data.invoices.length}. Redenciones: ${data.redemptions.length}.`,
         }),
       })
       const result = await response.json()
@@ -309,7 +309,7 @@ export default function ClientDetailPage() {
       }
       router.push("/admin/clients")
     } catch {
-      setFeedback({ type: "error", message: "Error de conexion eliminando cliente." })
+      setFeedback({ type: "error", message: "Error de conexión eliminando cliente." })
     } finally {
       setDeletingClient(false)
     }
@@ -329,7 +329,7 @@ export default function ClientDetailPage() {
           <div>
             <h1 className="text-2xl font-bold text-foreground">Detalle de cliente</h1>
             <p className="text-sm text-muted-foreground">
-              Edita informacion general, contrasena, puntos, limites y trazabilidad completa.
+              Edita información general, contraseña, puntos, límites y trazabilidad completa.
             </p>
           </div>
           <Button
@@ -349,7 +349,7 @@ export default function ClientDetailPage() {
         {isLoading ? (
           <Card>
             <CardContent className="py-10 text-center text-sm text-muted-foreground">
-              Cargando informacion...
+              Cargando información...
             </CardContent>
           </Card>
         ) : !data?.client ? (
@@ -363,7 +363,7 @@ export default function ClientDetailPage() {
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <Card>
                 <CardHeader>
-                  <CardTitle>Informacion general</CardTitle>
+                  <CardTitle>Información general</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -381,7 +381,7 @@ export default function ClientDetailPage() {
                     </div>
 
                     <div className="space-y-1">
-                      <Label>Codigo cliente</Label>
+                      <Label>Código cliente</Label>
                       <Input value={data.client.user_code} disabled />
                     </div>
 
@@ -396,7 +396,7 @@ export default function ClientDetailPage() {
                     </div>
 
                     <div className="space-y-1">
-                      <Label>Telefono</Label>
+                      <Label>Teléfono</Label>
                       <Input
                         value={profileForm.phone}
                         onChange={(event) =>
@@ -406,7 +406,7 @@ export default function ClientDetailPage() {
                     </div>
 
                     <div className="space-y-1">
-                      <Label>Direccion</Label>
+                      <Label>Dirección</Label>
                       <Input
                         value={profileForm.address}
                         onChange={(event) =>
@@ -433,7 +433,7 @@ export default function ClientDetailPage() {
                   </div>
 
                   <div className="space-y-1">
-                    <Label>Contrasena del cliente</Label>
+                    <Label>Contraseña del cliente</Label>
                     <Input
                       value={profileForm.password_plain}
                       onChange={(event) =>
@@ -442,15 +442,15 @@ export default function ClientDetailPage() {
                           password_plain: event.target.value,
                         }))
                       }
-                      placeholder="Dejala vacia para limpiar la contrasena"
+                      placeholder="Déjala vacía para limpiar la contraseña"
                     />
                   </div>
 
                   <div className="flex items-center justify-between rounded-lg border p-3">
                     <div>
-                      <p className="text-sm font-medium text-foreground">Exceder limite diario</p>
+                      <p className="text-sm font-medium text-foreground">Exceder límite diario</p>
                       <p className="text-xs text-muted-foreground">
-                        Si esta activo, el cliente puede canjear por encima del limite diario.
+                        Si está activo, el cliente puede canjear por encima del límite diario.
                       </p>
                     </div>
                     <Switch
@@ -465,24 +465,24 @@ export default function ClientDetailPage() {
                   </div>
 
                   <div className="space-y-1">
-                    <Label>Comentario de edicion</Label>
+                    <Label>Comentario de edición</Label>
                     <Textarea
                       value={profileComment}
                       onChange={(event) => setProfileComment(event.target.value)}
-                      placeholder="Motivo de la modificacion"
+                      placeholder="Motivo de la modificación"
                     />
                   </div>
 
                   <Button onClick={onSaveProfile} disabled={savingProfile}>
                     {savingProfile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Guardar informacion
+                    Guardar información
                   </Button>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Puntos y limite diario</CardTitle>
+                  <CardTitle>Puntos y límite diario</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -517,9 +517,9 @@ export default function ClientDetailPage() {
 
                   <div className="flex items-center justify-between rounded-lg border p-3">
                     <div>
-                      <p className="text-sm font-medium text-foreground">Override de limite</p>
+                      <p className="text-sm font-medium text-foreground">Override de límite</p>
                       <p className="text-xs text-muted-foreground">
-                        Permite exceder el limite de canje para este cliente.
+                        Permite exceder el límite de canje para este cliente.
                       </p>
                     </div>
                     <Switch
@@ -538,7 +538,7 @@ export default function ClientDetailPage() {
                     <Textarea
                       value={pointsComment}
                       onChange={(event) => setPointsComment(event.target.value)}
-                      placeholder="Explica por que modificas puntos o limite"
+                      placeholder="Explica por que modificas puntos o límite"
                     />
                   </div>
 
@@ -548,7 +548,7 @@ export default function ClientDetailPage() {
                       Guardar puntos
                     </Button>
                     <Button variant="outline" onClick={onResetDailyLimit} disabled={savingPoints}>
-                      Reiniciar limite diario
+                      Reiniciar límite diario
                     </Button>
                   </div>
                 </CardContent>
@@ -559,13 +559,13 @@ export default function ClientDetailPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <ShieldCheck className="h-4 w-4 text-primary" />
-                  Validar redencion
+                  Validar redención
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <div className="flex-1">
-                    <Label htmlFor="code">Codigo</Label>
+                    <Label htmlFor="code">Código</Label>
                     <Input
                       id="code"
                       value={code}
@@ -580,17 +580,17 @@ export default function ClientDetailPage() {
                       disabled={loadingValidate || !code.trim()}
                     >
                       {loadingValidate && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Validar codigo
+                      Validar código
                     </Button>
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <Label>Comentario de validacion</Label>
+                  <Label>Comentario de validación</Label>
                   <Textarea
                     value={validateComment}
                     onChange={(event) => setValidateComment(event.target.value)}
-                    placeholder="Detalle de la validacion"
+                    placeholder="Detalle de la validación"
                   />
                 </div>
 
@@ -614,7 +614,7 @@ export default function ClientDetailPage() {
                   </p>
                   {pendingRedemptions.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
-                      No hay codigos pendientes para este cliente.
+                      No hay códigos pendientes para este cliente.
                     </p>
                   ) : (
                     <div className="space-y-2">
@@ -628,7 +628,7 @@ export default function ClientDetailPage() {
                               {item.products?.name || "Producto"}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              Codigo: {item.code} | {item.points_spent} pts
+                              Código: {item.code} | {item.points_spent} pts
                             </p>
                           </div>
                           <div className="flex gap-2">
@@ -721,7 +721,7 @@ export default function ClientDetailPage() {
                           )}
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          Codigo {redemption.code} | {redemption.points_spent} pts
+                          Código {redemption.code} | {redemption.points_spent} pts
                         </p>
                         {redemption.status === "validated" && (
                           <p className="text-xs text-muted-foreground">

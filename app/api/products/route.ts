@@ -43,14 +43,14 @@ export async function POST(request: Request) {
 
   if (!name || !categoryId) {
     return NextResponse.json(
-      { error: "Nombre y categoria son obligatorios." },
+      { error: "Nombre y categoría son obligatorios." },
       { status: 400 },
     )
   }
 
   if (!Number.isFinite(pointsCost) || pointsCost < 0) {
     return NextResponse.json(
-      { error: "Debes indicar una cantidad valida de puntos para el producto." },
+      { error: "Debes indicar una cantidad válida de puntos para el producto." },
       { status: 400 },
     )
   }
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
   const { data: category } = await supabase.from("categories").select("id").eq("id", categoryId).single()
 
   if (!category) {
-    return NextResponse.json({ error: "Categoria no encontrada." }, { status: 404 })
+    return NextResponse.json({ error: "Categoría no encontrada." }, { status: 404 })
   }
 
   const { data, error } = await supabase

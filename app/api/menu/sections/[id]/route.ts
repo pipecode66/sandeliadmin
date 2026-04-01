@@ -53,7 +53,7 @@ export async function PATCH(
   if (body.category_id !== undefined) {
     const categoryId = String(body.category_id || "").trim()
     if (!categoryId) {
-      return NextResponse.json({ error: "La categoria es obligatoria." }, { status: 400 })
+      return NextResponse.json({ error: "La categoría es obligatoria." }, { status: 400 })
     }
     const exists = await categoryExists(supabase, categoryId)
     if (!exists) {
@@ -63,7 +63,7 @@ export async function PATCH(
   }
 
   if (typeof updates.title === "string" && !String(updates.title).trim()) {
-    return NextResponse.json({ error: "El titulo de la subseccion es obligatorio." }, { status: 400 })
+    return NextResponse.json({ error: "El título de la subsección es obligatorio." }, { status: 400 })
   }
 
   const { data, error } = await supabase

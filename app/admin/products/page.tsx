@@ -72,7 +72,7 @@ export default function ProductsPage() {
       const url = await uploadAdminFile(file, "products")
       setForm((current) => ({ ...current, image_url: url }))
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Error de conexion subiendo imagen.")
+      setError(error instanceof Error ? error.message : "Error de conexión subiendo imagen.")
     } finally {
       setUploading(false)
     }
@@ -106,7 +106,7 @@ export default function ProductsPage() {
       resetForm()
       mutateProducts()
     } catch {
-      setError("Error de conexion al guardar.")
+      setError("Error de conexión al guardar.")
     } finally {
       setSaving(false)
     }
@@ -159,13 +159,13 @@ export default function ProductsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Categoria</Label>
+                <Label>Categoría</Label>
                 <Select
                   value={form.category_id}
                   onValueChange={(value) => setForm((cur) => ({ ...cur, category_id: value }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecciona categoria" />
+                    <SelectValue placeholder="Selecciona categoría" />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((category) => (
@@ -236,7 +236,7 @@ export default function ProductsPage() {
               </div>
 
               <div className="rounded-lg bg-primary/10 p-3 text-sm text-primary lg:col-span-2">
-                Los puntos se configuran por producto y ya no dependen de la categoria.
+                Los puntos se configuran por producto y ya no dependen de la categoría.
               </div>
 
               {error && <p className="text-sm text-destructive lg:col-span-2">{error}</p>}
@@ -291,7 +291,7 @@ export default function ProductsPage() {
                     <p className="text-sm font-semibold text-foreground">{product.name}</p>
                     <p className="text-xs text-muted-foreground">{product.description}</p>
                     <p className="text-xs text-primary">
-                      {product.categories?.name || "Sin categoria"} · {product.points_cost} pts
+                      {product.categories?.name || "Sin categoría"} · {product.points_cost} pts
                     </p>
                   </div>
                   <div className="flex gap-2">
