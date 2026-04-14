@@ -14,9 +14,9 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { uploadAdminFile } from "@/lib/admin-upload"
-import { Loader2, Pencil, Trash2, Upload } from "lucide-react"
+import { Loader2, Pencil, Search, Trash2, Upload } from "lucide-react"
 import Image from "next/image"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import useSWR from "swr"
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
@@ -48,6 +48,7 @@ export default function ProductsPage() {
   const [uploading, setUploading] = useState(false)
   const [editing, setEditing] = useState<Product | null>(null)
   const [error, setError] = useState("")
+  const [search, setSearch] = useState("")
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -58,6 +59,12 @@ export default function ProductsPage() {
 
   const categories = categoriesData?.categories || []
   const products = productsData?.products || []
+  const filteredProducts = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    if (!query) return products
+
+    return products.filter((product) => product.name.toLowerCase().includes(query))
+  }, [products, search])
 
   const resetForm = () => {
     setEditing(null)
@@ -264,14 +271,26 @@ export default function ProductsPage() {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>Listado de productos</span>
-              <span className="text-sm font-normal text-muted-foreground">{products.length}</span>
+              <span className="text-sm font-normal text-muted-foreground">
+                {filteredProducts.length}
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {products.length === 0 ? (
+            <div className="relative max-w-md">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                className="pl-9"
+                placeholder="Buscar producto por nombre"
+              />
+            </div>
+
+            {filteredProducts.length === 0 ? (
               <p className="text-sm text-muted-foreground">No hay productos registrados.</p>
             ) : (
-              products.map((product) => (
+              filteredProducts.map((product) => (
                 <div
                   key={product.id}
                   className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center"

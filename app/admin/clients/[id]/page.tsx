@@ -292,7 +292,7 @@ export default function ClientDetailPage() {
           <div>
             <h1 className="text-2xl font-bold text-foreground">Detalle de cliente</h1>
             <p className="text-sm text-muted-foreground">
-              Edita información general, contraseña, puntos, límites y trazabilidad completa.
+              Edita informacion general, contrasena, puntos y trazabilidad completa.
             </p>
           </div>
           <Button
@@ -717,4 +717,5 @@ export default function ClientDetailPage() {
     </AdminShell>
   )
 }
+
 
