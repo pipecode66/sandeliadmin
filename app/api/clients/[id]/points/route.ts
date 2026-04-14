@@ -7,7 +7,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const admin = await requireAdmin("supervisor")
+  const admin = await requireAdmin("caja")
   if (!admin.ok) return admin.response
 
   const { id } = await params
@@ -16,7 +16,7 @@ export async function PATCH(
 
   const { data: current, error: currentError } = await supabase
     .from("clients")
-    .select("id, points, redeemed_today, last_redeem_date, daily_limit_override")
+    .select("id, points")
     .eq("id", id)
     .single()
 
@@ -29,36 +29,14 @@ export async function PATCH(
   if (body.points !== undefined) {
     const parsed = Number(body.points)
     if (Number.isNaN(parsed)) {
-      return NextResponse.json({ error: "points debe ser numérico." }, { status: 400 })
+      return NextResponse.json({ error: "points debe ser numerico." }, { status: 400 })
     }
     updates.points = Math.trunc(parsed)
   }
 
-  if (body.redeemed_today !== undefined) {
-    const parsed = Number(body.redeemed_today)
-    if (Number.isNaN(parsed)) {
-      return NextResponse.json(
-        { error: "redeemed_today debe ser numérico." },
-        { status: 400 },
-      )
-    }
-    updates.redeemed_today = Math.max(0, Math.trunc(parsed))
-    updates.last_redeem_date = new Date().toISOString().split("T")[0]
-  }
-
-  if (typeof body.daily_limit_override === "boolean") {
-    updates.daily_limit_override = body.daily_limit_override
-  }
-
-  if (body.reset_daily_limit === true) {
-    updates.redeemed_today = 0
-    updates.last_redeem_date = null
-    updates.daily_limit_override = false
-  }
-
   if (Object.keys(updates).length === 0) {
     return NextResponse.json(
-      { error: "No hay cambios válidos para aplicar en puntos/límites." },
+      { error: "No hay cambios validos para aplicar en puntos." },
       { status: 400 },
     )
   }
@@ -67,7 +45,7 @@ export async function PATCH(
     .from("clients")
     .update(updates)
     .eq("id", id)
-    .select("id, points, redeemed_today, last_redeem_date, daily_limit_override")
+    .select("id, points")
     .single()
 
   if (error || !data) {

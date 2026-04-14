@@ -174,8 +174,6 @@ export async function POST(request: Request) {
       gender,
       user_code: userCode,
       points: 0,
-      redeemed_today: 0,
-      daily_limit_override: false,
       birthday_month: birthday.birthdayMonth,
       birthday_day: birthday.birthdayDay,
       password_plain: null,

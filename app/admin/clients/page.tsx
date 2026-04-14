@@ -18,7 +18,6 @@ type Client = {
   gender: string
   birthday_month?: number | null
   birthday_day?: number | null
-  daily_limit_override?: boolean
 }
 
 const fetcher = async (url: string) => {
@@ -52,7 +51,7 @@ export default function ClientsPage() {
           <div>
             <h1 className="text-2xl font-bold text-foreground">Clientes</h1>
             <p className="text-sm text-muted-foreground">
-              Gestiona clientes, puntos y limites del programa de fidelizacion.
+              Gestiona clientes, puntos y datos clave del programa de fidelizacion.
             </p>
           </div>
           <Link href="/admin/clients/new">
@@ -111,12 +110,6 @@ export default function ClientsPage() {
                           <p>Puntos</p>
                         </div>
                         <div>
-                          <p className="font-medium text-foreground">
-                            {client.daily_limit_override ? "Excedido" : "Normal"}
-                          </p>
-                          <p>Limite</p>
-                        </div>
-                        <div>
                           <p className="font-medium text-foreground">{client.gender}</p>
                           <p>Sexo</p>
                         </div>
@@ -148,9 +141,6 @@ export default function ClientsPage() {
                         <th className="px-4 py-3 text-center text-xs font-medium uppercase text-muted-foreground">
                           Puntos
                         </th>
-                        <th className="px-4 py-3 text-center text-xs font-medium uppercase text-muted-foreground">
-                          Limite
-                        </th>
                         <th className="px-4 py-3 text-right text-xs font-medium uppercase text-muted-foreground">
                           Acciones
                         </th>
@@ -175,17 +165,6 @@ export default function ClientsPage() {
                             <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-1 text-xs font-bold text-primary">
                               {client.points} pts
                             </span>
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            {client.daily_limit_override ? (
-                              <span className="inline-flex rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">
-                                Excedido
-                              </span>
-                            ) : (
-                              <span className="inline-flex rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700">
-                                Normal
-                              </span>
-                            )}
                           </td>
                           <td className="px-4 py-3 text-right">
                             <Link href={`/admin/clients/${client.id}`}>

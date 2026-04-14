@@ -17,7 +17,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 
 const fetcher = async (url: string) => {
@@ -40,9 +39,6 @@ type ClientPayload = {
     birthday_month?: number | null
     birthday_day?: number | null
     points: number
-    redeemed_today: number
-    last_redeem_date: string | null
-    daily_limit_override?: boolean
     user_code: string
     password_plain: string | null
     password_set: boolean
@@ -109,12 +105,9 @@ export default function ClientDetailPage() {
     birthday_month: "",
     birthday_day: "",
     password_plain: "",
-    daily_limit_override: false,
   })
   const [pointsForm, setPointsForm] = useState({
     points: "0",
-    redeemed_today: "0",
-    daily_limit_override: false,
   })
 
   const { data, isLoading, mutate } = useSWR<ClientPayload>(
@@ -146,12 +139,9 @@ export default function ClientDetailPage() {
           ? ""
           : String(data.client.birthday_day),
       password_plain: data.client.password_plain || "",
-      daily_limit_override: Boolean(data.client.daily_limit_override),
     })
     setPointsForm({
       points: String(data.client.points || 0),
-      redeemed_today: String(data.client.redeemed_today || 0),
-      daily_limit_override: Boolean(data.client.daily_limit_override),
     })
   }, [data?.client])
 
@@ -233,8 +223,6 @@ export default function ClientDetailPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           points: Number(pointsForm.points || 0),
-          redeemed_today: Number(pointsForm.redeemed_today || 0),
-          daily_limit_override: pointsForm.daily_limit_override,
           comment: pointsComment,
         }),
       })
@@ -247,36 +235,7 @@ export default function ClientDetailPage() {
         return
       }
       setPointsComment("")
-      setFeedback({ type: "ok", message: "Puntos y límite diario actualizados." })
-      await Promise.all([mutate(), mutateAudit()])
-    } catch {
-      setFeedback({ type: "error", message: "Error de conexión." })
-    } finally {
-      setSavingPoints(false)
-    }
-  }
-
-  const onResetDailyLimit = async () => {
-    if (!clientId) return
-    setSavingPoints(true)
-    try {
-      const response = await fetch(`/api/clients/${clientId}/points`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          reset_daily_limit: true,
-          comment: pointsComment || "Reinicio manual del límite diario.",
-        }),
-      })
-      const result = await response.json()
-      if (!response.ok) {
-        setFeedback({
-          type: "error",
-          message: result.error || "No se pudo reiniciar el límite.",
-        })
-        return
-      }
-      setFeedback({ type: "ok", message: "Límite diario reiniciado correctamente." })
+      setFeedback({ type: "ok", message: "Puntos actualizados." })
       await Promise.all([mutate(), mutateAudit()])
     } catch {
       setFeedback({ type: "error", message: "Error de conexión." })
@@ -484,23 +443,6 @@ export default function ClientDetailPage() {
                     />
                   </div>
 
-                  <div className="flex items-center justify-between rounded-lg border p-3">
-                    <div>
-                      <p className="text-sm font-medium text-foreground">Exceder límite diario</p>
-                      <p className="text-xs text-muted-foreground">
-                        Si está activo, el cliente puede canjear por encima del límite diario.
-                      </p>
-                    </div>
-                    <Switch
-                      checked={profileForm.daily_limit_override}
-                      onCheckedChange={(value) =>
-                        setProfileForm((current) => ({
-                          ...current,
-                          daily_limit_override: value,
-                        }))
-                      }
-                    />
-                  </div>
 
                   <div className="space-y-1">
                     <Label>Comentario de edición</Label>
@@ -520,52 +462,18 @@ export default function ClientDetailPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Puntos y límite diario</CardTitle>
+                  <CardTitle>Puntos del cliente</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div className="space-y-1">
-                      <Label>Puntos disponibles</Label>
-                      <Input
-                        type="number"
-                        value={pointsForm.points}
-                        onChange={(event) =>
-                          setPointsForm((current) => ({
-                            ...current,
-                            points: event.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <Label>Canjeado hoy</Label>
-                      <Input
-                        type="number"
-                        value={pointsForm.redeemed_today}
-                        onChange={(event) =>
-                          setPointsForm((current) => ({
-                            ...current,
-                            redeemed_today: event.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between rounded-lg border p-3">
-                    <div>
-                      <p className="text-sm font-medium text-foreground">Override de límite</p>
-                      <p className="text-xs text-muted-foreground">
-                        Permite exceder el límite de canje para este cliente.
-                      </p>
-                    </div>
-                    <Switch
-                      checked={pointsForm.daily_limit_override}
-                      onCheckedChange={(value) =>
+                  <div className="space-y-1">
+                    <Label>Puntos disponibles</Label>
+                    <Input
+                      type="number"
+                      value={pointsForm.points}
+                      onChange={(event) =>
                         setPointsForm((current) => ({
                           ...current,
-                          daily_limit_override: value,
+                          points: event.target.value,
                         }))
                       }
                     />
@@ -576,7 +484,7 @@ export default function ClientDetailPage() {
                     <Textarea
                       value={pointsComment}
                       onChange={(event) => setPointsComment(event.target.value)}
-                      placeholder="Explica por que modificas puntos o límite"
+                      placeholder="Explica por que modificas los puntos"
                     />
                   </div>
 
@@ -584,9 +492,6 @@ export default function ClientDetailPage() {
                     <Button onClick={onSavePoints} disabled={savingPoints}>
                       {savingPoints && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       Guardar puntos
-                    </Button>
-                    <Button variant="outline" onClick={onResetDailyLimit} disabled={savingPoints}>
-                      Reiniciar límite diario
                     </Button>
                   </div>
                 </CardContent>
@@ -812,3 +717,4 @@ export default function ClientDetailPage() {
     </AdminShell>
   )
 }
+

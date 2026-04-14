@@ -60,7 +60,7 @@ export async function POST(request: Request) {
 
   const { data: client } = await supabase
     .from("clients")
-    .select("id, points, redeemed_today, last_redeem_date, daily_limit_override")
+    .select("id, points")
     .eq("id", auth.clientId)
     .single()
 
@@ -84,26 +84,6 @@ export async function POST(request: Request) {
     return corsJson(
       request,
       { error: "No tienes suficientes puntos para redimir este producto." },
-      { status: 400 },
-      CORS_METHODS,
-    )
-  }
-
-  const today = new Date().toISOString().split("T")[0]
-  const currentRedeemedToday = client.last_redeem_date === today ? client.redeemed_today : 0
-
-  if (!client.daily_limit_override && currentRedeemedToday + pointsCost > 60) {
-    const now = new Date()
-    const midnight = new Date(now)
-    midnight.setHours(24, 0, 0, 0)
-    const waitMinutes = Math.ceil((midnight.getTime() - now.getTime()) / 60000)
-
-    return corsJson(
-      request,
-      {
-        error: "Has alcanzado el limite diario de 60 puntos. Intenta nuevamente manana.",
-        waitMinutes,
-      },
       { status: 400 },
       CORS_METHODS,
     )

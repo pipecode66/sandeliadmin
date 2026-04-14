@@ -1,7 +1,7 @@
 "use client"
 
 import { useApp, type RedeemableProduct } from "@/lib/app-context"
-import { Star, X, Clock, CheckCircle, AlertTriangle } from "lucide-react"
+import { Star, X, CheckCircle, AlertTriangle } from "lucide-react"
 import { useState } from "react"
 import Image from "next/image"
 
@@ -45,55 +45,6 @@ function RedeemPopup({
           Este codigo sera validado por el administrador en la otra aplicacion.
           Una vez confirmado, tus puntos seran descontados.
         </p>
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-full rounded-xl bg-primary py-3 text-base font-semibold text-primary-foreground transition-all active:scale-[0.98]"
-        >
-          Entendido
-        </button>
-      </div>
-    </div>
-  )
-}
-
-function LimitPopup({
-  waitMinutes,
-  onClose,
-}: {
-  waitMinutes: number
-  onClose: () => void
-}) {
-  const hours = Math.floor(waitMinutes / 60)
-  const mins = waitMinutes % 60
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-      <div
-        className="absolute inset-0 bg-foreground/50 backdrop-blur-sm"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-      <div className="relative w-full max-w-sm rounded-3xl bg-background p-6 text-center shadow-2xl animate-in zoom-in-95 duration-200">
-        <div className="mb-4 flex justify-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
-            <Clock className="h-8 w-8 text-amber-600" />
-          </div>
-        </div>
-        <h3 className="mb-2 text-lg font-bold text-foreground">
-          Limite diario alcanzado
-        </h3>
-        <p className="mb-4 text-sm text-muted-foreground">
-          Has alcanzado el limite de 60 puntos canjeables por dia.
-          Por favor espera para volver a redimir.
-        </p>
-        <div className="mb-5 rounded-xl bg-amber-50 px-4 py-3">
-          <p className="text-sm font-semibold text-amber-800">
-            {"Disponible en: "}
-            {hours > 0 ? `${hours}h ` : ""}
-            {`${mins}min`}
-          </p>
-        </div>
         <button
           type="button"
           onClick={onClose}
@@ -210,10 +161,9 @@ export function RedeemablesTab() {
   const [activeCategory, setActiveCategory] = useState("Todas")
   const [selectedProduct, setSelectedProduct] = useState<RedeemableProduct | null>(null)
   const [redeemResult, setRedeemResult] = useState<{
-    type: "success" | "limit"
+    type: "success"
     code?: string
     product?: RedeemableProduct
-    waitMinutes?: number
   } | null>(null)
   const [redeemError, setRedeemError] = useState("")
 
@@ -233,17 +183,10 @@ export function RedeemablesTab() {
     if (result.success && result.code) {
       setSelectedProduct(null)
       setRedeemResult({ type: "success", code: result.code, product })
-    } else if (result.waitMinutes) {
-      setSelectedProduct(null)
-      setRedeemResult({ type: "limit", waitMinutes: result.waitMinutes })
     } else if (result.error) {
       setRedeemError(result.error)
     }
   }
-
-  const todayStr = new Date().toISOString().split("T")[0]
-  const redeemedToday = user?.lastRedeemDate === todayStr ? (user?.redeemedToday ?? 0) : 0
-  const remainingToday = 60 - redeemedToday
 
   return (
     <div className="flex-1 overflow-y-auto px-5 pb-4">
@@ -278,23 +221,12 @@ export function RedeemablesTab() {
         ))}
       </div>
 
-      {/* Points and daily limit bar */}
-      <div className="mb-5 flex items-center gap-2">
-        <div className="flex flex-1 items-center gap-2 rounded-xl bg-primary/5 px-3 py-2.5">
-          <Star className="h-4 w-4 text-primary" fill="currentColor" />
-          <p className="text-sm font-semibold text-foreground">
-            <span className="text-primary">{user?.points ?? 0}</span>
-            <span className="text-muted-foreground"> pts</span>
-          </p>
-        </div>
-        <div className="flex flex-1 items-center gap-2 rounded-xl bg-secondary px-3 py-2.5">
-          <Clock className="h-4 w-4 text-muted-foreground" />
-          <p className="text-xs text-muted-foreground">
-            {"Hoy: "}
-            <span className="font-bold text-foreground">{remainingToday}</span>
-            {" pts disponibles"}
-          </p>
-        </div>
+      <div className="mb-5 flex items-center gap-2 rounded-xl bg-primary/5 px-3 py-2.5">
+        <Star className="h-4 w-4 text-primary" fill="currentColor" />
+        <p className="text-sm font-semibold text-foreground">
+          <span className="text-primary">{user?.points ?? 0}</span>
+          <span className="text-muted-foreground"> pts disponibles</span>
+        </p>
       </div>
 
       {/* Products list */}
@@ -374,14 +306,6 @@ export function RedeemablesTab() {
         <RedeemPopup
           code={redeemResult.code}
           product={redeemResult.product}
-          onClose={() => setRedeemResult(null)}
-        />
-      )}
-
-      {/* Daily limit popup */}
-      {redeemResult?.type === "limit" && redeemResult.waitMinutes && (
-        <LimitPopup
-          waitMinutes={redeemResult.waitMinutes}
           onClose={() => setRedeemResult(null)}
         />
       )}

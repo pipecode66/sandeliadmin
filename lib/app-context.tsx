@@ -12,8 +12,6 @@ export interface UserProfile {
   name: string
   points: number
   joinDate: string
-  redeemedToday: number
-  lastRedeemDate: string
 }
 
 export interface Notification {
@@ -80,7 +78,7 @@ interface AppState {
   dismissIOSTutorial: () => void
   redeemProduct: (
     product: RedeemableProduct,
-  ) => Promise<{ success: boolean; code?: string; waitMinutes?: number; error?: string }>
+  ) => Promise<{ success: boolean; code?: string; error?: string }>
   logout: () => void
   refreshData: () => Promise<void>
 }
@@ -128,8 +126,6 @@ function mapClientToUser(client: Record<string, unknown>): UserProfile {
     name: String(client.full_name || ""),
     points: Number(client.points || 0),
     joinDate: String(client.created_at || new Date().toISOString()),
-    redeemedToday: Number(client.redeemed_today || 0),
-    lastRedeemDate: String(client.last_redeem_date || ""),
   }
 }
 
@@ -302,7 +298,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const redeemProduct = useCallback(async (product: RedeemableProduct) => {
     const response = await fetchJson<{
       error?: string
-      waitMinutes?: number
       code?: string
       redemption?: { code?: string }
     }>("/api/redemptions", {
@@ -314,7 +309,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!response.ok) {
       return {
         success: false,
-        waitMinutes: response.data?.waitMinutes,
         error: response.data?.error || "No se pudo crear el canje.",
       }
     }

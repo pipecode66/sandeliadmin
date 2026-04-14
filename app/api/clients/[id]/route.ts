@@ -126,10 +126,6 @@ export async function PATCH(
     updates.birthday_month = birthday.birthdayMonth
     updates.birthday_day = birthday.birthdayDay
   }
-  if (typeof body.daily_limit_override === "boolean") {
-    updates.daily_limit_override = body.daily_limit_override
-  }
-
   if (body.password_plain !== undefined) {
     if (typeof body.password_plain === "string" && body.password_plain.trim()) {
       updates.password_plain = body.password_plain.trim()
@@ -180,7 +176,7 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const admin = await requireAdmin("gerente")
+  const admin = await requireAdmin("caja")
   if (!admin.ok) return admin.response
 
   const { id } = await params

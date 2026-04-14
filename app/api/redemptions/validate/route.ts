@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   const normalizedCode = String(code || "").trim().toUpperCase()
   if (!normalizedCode) {
     return NextResponse.json(
-      { error: "Debes enviar el código de redención." },
+      { error: "Debes enviar el codigo de redencion." },
       { status: 400 },
     )
   }
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   const { data: redemption, error } = await supabase
     .from("redemptions")
     .select(
-      "*, products(name, points_cost, image_url), clients(full_name, points, redeemed_today, last_redeem_date, daily_limit_override)",
+      "*, products(name, points_cost, image_url), clients(full_name, points)",
     )
     .eq("code", normalizedCode)
     .eq("status", "pending")
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
 
   if (error || !redemption) {
     return NextResponse.json(
-      { error: "Código no encontrado o ya fue validado." },
+      { error: "Codigo no encontrado o ya fue validado." },
       { status: 404 },
     )
   }
@@ -37,20 +37,6 @@ export async function POST(request: Request) {
   const client = redemption.clients as {
     full_name: string
     points: number
-    redeemed_today: number
-    last_redeem_date: string
-    daily_limit_override?: boolean
-  }
-
-  const today = new Date().toISOString().split("T")[0]
-  const currentRedeemedToday = client.last_redeem_date === today ? client.redeemed_today : 0
-  const override = Boolean(client.daily_limit_override)
-
-  if (!override && currentRedeemedToday + redemption.points_spent > 60) {
-    return NextResponse.json(
-      { error: "El cliente ya alcanzó el límite diario de 60 puntos canjeados." },
-      { status: 400 },
-    )
   }
 
   if (client.points < redemption.points_spent) {
@@ -75,7 +61,7 @@ export async function POST(request: Request) {
 
   if (updateRedemptionError || !updatedRedemption) {
     return NextResponse.json(
-      { error: updateRedemptionError?.message || "No se pudo validar la redención." },
+      { error: updateRedemptionError?.message || "No se pudo validar la redencion." },
       { status: 500 },
     )
   }
@@ -84,11 +70,9 @@ export async function POST(request: Request) {
     .from("clients")
     .update({
       points: client.points - redemption.points_spent,
-      redeemed_today: currentRedeemedToday + redemption.points_spent,
-      last_redeem_date: today,
     })
     .eq("id", redemption.client_id)
-    .select("id, points, redeemed_today, last_redeem_date")
+    .select("id, points")
     .single()
 
   if (updateClientError) {
