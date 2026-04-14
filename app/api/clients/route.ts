@@ -38,6 +38,28 @@ function normalizePhoneForStorage(rawPhone?: string | null) {
   return localCandidate || candidates[0]
 }
 
+function parseBirthdayValue(value: unknown, min: number, max: number) {
+  if (value === null || value === undefined || value === "") return null
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || parsed < min || parsed > max) return NaN
+  return Math.floor(parsed)
+}
+
+function parseBirthdayFields(body: Record<string, unknown>) {
+  const birthdayMonth = parseBirthdayValue(body.birthday_month, 1, 12)
+  const birthdayDay = parseBirthdayValue(body.birthday_day, 1, 31)
+
+  if (Number.isNaN(birthdayMonth) || Number.isNaN(birthdayDay)) {
+    return { error: "La fecha de cumpleanos debe incluir un mes entre 1 y 12 y un dia entre 1 y 31." }
+  }
+
+  if ((birthdayMonth === null) !== (birthdayDay === null)) {
+    return { error: "Debes completar mes y dia del cumpleanos o dejar ambos vacios." }
+  }
+
+  return { birthdayMonth, birthdayDay }
+}
+
 export async function GET(request: Request) {
   const admin = await requireAdmin("caja")
   if (!admin.ok) return admin.response
@@ -46,24 +68,59 @@ export async function GET(request: Request) {
   const search = searchParams.get("search") || ""
   const supabase = createAdminClient()
 
-  let query = supabase.from("clients").select("*").order("created_at", { ascending: false })
+  if (!search.trim()) {
+    const { data, error } = await supabase
+      .from("clients")
+      .select("*")
+      .order("created_at", { ascending: false })
 
-  if (search) {
-    query = query.or(
-      `full_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`,
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ clients: data || [] })
+  }
+
+  const phoneCandidates = buildPhoneCandidates(search)
+  const baseQuery = supabase
+    .from("clients")
+    .select("*")
+    .or(`full_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`)
+
+  const phoneQuery =
+    phoneCandidates.length > 0
+      ? supabase.from("clients").select("*").in("phone", phoneCandidates)
+      : Promise.resolve({ data: [], error: null })
+
+  const [baseResult, phoneResult] = await Promise.all([baseQuery, phoneQuery])
+
+  if (baseResult.error || phoneResult.error) {
+    return NextResponse.json(
+      { error: baseResult.error?.message || phoneResult.error?.message || "No se pudo consultar clientes." },
+      { status: 500 },
     )
   }
 
-  const { data, error } = await query
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  const merged = new Map<string, Record<string, unknown>>()
+  for (const client of [...(baseResult.data || []), ...(phoneResult.data || [])]) {
+    merged.set(String(client.id), client)
   }
 
-  return NextResponse.json({ clients: data })
+  const clients = Array.from(merged.values()).sort((left, right) => {
+    const leftPhone = String(left.phone || "")
+    const rightPhone = String(right.phone || "")
+    const leftMatch = phoneCandidates.includes(leftPhone) ? 0 : 1
+    const rightMatch = phoneCandidates.includes(rightPhone) ? 0 : 1
+    if (leftMatch !== rightMatch) return leftMatch - rightMatch
+
+    return String(right.created_at || "").localeCompare(String(left.created_at || ""))
+  })
+
+  return NextResponse.json({ clients })
 }
 
 export async function POST(request: Request) {
-  const admin = await requireAdmin("supervisor")
+  const admin = await requireAdmin("caja")
   if (!admin.ok) return admin.response
 
   const body = await request.json()
@@ -72,6 +129,11 @@ export async function POST(request: Request) {
   const phone = String(body.phone || "").trim()
   const address = String(body.address || "").trim()
   const gender = body.gender
+  const birthday = parseBirthdayFields(body)
+
+  if ("error" in birthday) {
+    return NextResponse.json({ error: birthday.error }, { status: 400 })
+  }
 
   if (!email || !fullName || !phone || !address || !gender) {
     return NextResponse.json(
@@ -114,6 +176,8 @@ export async function POST(request: Request) {
       points: 0,
       redeemed_today: 0,
       daily_limit_override: false,
+      birthday_month: birthday.birthdayMonth,
+      birthday_day: birthday.birthdayDay,
       password_plain: null,
       password_set: false,
     })

@@ -36,11 +36,28 @@ export async function POST(request: Request) {
 
   const supabase = createAdminClient()
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("categories")
-    .insert({ name })
+    .insert({ name } as never)
     .select()
     .single()
+
+  // Compatibilidad para bases antiguas que todavia conservan points_cost como NOT NULL.
+  if (
+    error &&
+    (error.message.includes("points_cost") ||
+      error.details?.includes("points_cost") ||
+      error.hint?.includes("points_cost"))
+  ) {
+    const fallbackResult = await supabase
+      .from("categories")
+      .insert({ name, points_cost: 0 } as never)
+      .select()
+      .single()
+
+    data = fallbackResult.data
+    error = fallbackResult.error
+  }
 
   if (error) {
     if (error.code === "23505") {

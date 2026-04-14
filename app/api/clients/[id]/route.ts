@@ -27,6 +27,28 @@ function normalizePhoneForStorage(rawPhone?: string | null) {
   return localCandidate || candidates[0]
 }
 
+function parseBirthdayValue(value: unknown, min: number, max: number) {
+  if (value === null || value === undefined || value === "") return null
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || parsed < min || parsed > max) return NaN
+  return Math.floor(parsed)
+}
+
+function parseBirthdayFields(body: Record<string, unknown>) {
+  const birthdayMonth = parseBirthdayValue(body.birthday_month, 1, 12)
+  const birthdayDay = parseBirthdayValue(body.birthday_day, 1, 31)
+
+  if (Number.isNaN(birthdayMonth) || Number.isNaN(birthdayDay)) {
+    return { error: "La fecha de cumpleanos debe incluir un mes entre 1 y 12 y un dia entre 1 y 31." }
+  }
+
+  if ((birthdayMonth === null) !== (birthdayDay === null)) {
+    return { error: "Debes completar mes y dia del cumpleanos o dejar ambos vacios." }
+  }
+
+  return { birthdayMonth, birthdayDay }
+}
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -72,12 +94,17 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const admin = await requireAdmin("supervisor")
+  const admin = await requireAdmin("caja")
   if (!admin.ok) return admin.response
 
   const { id } = await params
   const body = await request.json()
   const supabase = createAdminClient()
+  const birthday = parseBirthdayFields(body)
+
+  if ("error" in birthday) {
+    return NextResponse.json({ error: birthday.error }, { status: 400 })
+  }
 
   const { data: current, error: currentError } = await supabase
     .from("clients")
@@ -95,6 +122,10 @@ export async function PATCH(
   if (typeof body.phone === "string") updates.phone = normalizePhoneForStorage(body.phone)
   if (typeof body.address === "string") updates.address = body.address.trim()
   if (body.gender === "Femenino" || body.gender === "Masculino") updates.gender = body.gender
+  if (body.birthday_month !== undefined || body.birthday_day !== undefined) {
+    updates.birthday_month = birthday.birthdayMonth
+    updates.birthday_day = birthday.birthdayDay
+  }
   if (typeof body.daily_limit_override === "boolean") {
     updates.daily_limit_override = body.daily_limit_override
   }

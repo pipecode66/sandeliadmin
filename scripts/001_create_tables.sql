@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS clients (
   phone TEXT NOT NULL,
   address TEXT NOT NULL,
   gender TEXT NOT NULL CHECK (gender IN ('Femenino', 'Masculino')),
+  birthday_month INTEGER CHECK (birthday_month BETWEEN 1 AND 12),
+  birthday_day INTEGER CHECK (birthday_day BETWEEN 1 AND 31),
   points INTEGER DEFAULT 0,
   redeemed_today INTEGER DEFAULT 0,
   last_redeem_date DATE,

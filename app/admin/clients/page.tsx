@@ -16,6 +16,8 @@ type Client = {
   phone: string
   points: number
   gender: string
+  birthday_month?: number | null
+  birthday_day?: number | null
   daily_limit_override?: boolean
 }
 
@@ -23,9 +25,14 @@ const fetcher = async (url: string) => {
   const response = await fetch(url)
   const data = await response.json()
   if (!response.ok) {
-    throw new Error(data.error || "No se pudo cargar la información.")
+    throw new Error(data.error || "No se pudo cargar la informacion.")
   }
   return data
+}
+
+function formatBirthday(client: Client) {
+  if (!client.birthday_month || !client.birthday_day) return "Sin fecha registrada"
+  return `${String(client.birthday_day).padStart(2, "0")}/${String(client.birthday_month).padStart(2, "0")}`
 }
 
 export default function ClientsPage() {
@@ -40,26 +47,26 @@ export default function ClientsPage() {
 
   return (
     <AdminShell>
-      <div className="flex flex-col gap-6">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Clientes</h1>
             <p className="text-sm text-muted-foreground">
-              Gestiona clientes, puntos y límites del programa de fidelización.
+              Gestiona clientes, puntos y limites del programa de fidelizacion.
             </p>
           </div>
           <Link href="/admin/clients/new">
-            <Button>
+            <Button className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               Nuevo cliente
             </Button>
           </Link>
         </div>
 
-        <div className="relative max-w-sm">
+        <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Buscar por nombre, correo o teléfono..."
+            placeholder="Buscar por nombre, correo o telefono..."
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             className="pl-9"
@@ -74,89 +81,127 @@ export default function ClientsPage() {
 
         <Card>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
-                      Nombre
-                    </th>
-                    <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground md:table-cell">
-                      Correo
-                    </th>
-                    <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground sm:table-cell">
-                      Teléfono
-                    </th>
-                    <th className="px-4 py-3 text-center text-xs font-medium uppercase text-muted-foreground">
-                      Puntos
-                    </th>
-                    <th className="hidden px-4 py-3 text-center text-xs font-medium uppercase text-muted-foreground lg:table-cell">
-                      Límite
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-muted-foreground">
-                      Acciones
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {isLoading ? (
-                    <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center text-sm text-muted-foreground">
-                        Cargando...
-                      </td>
-                    </tr>
-                  ) : clients.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center text-sm text-muted-foreground">
-                        No hay clientes registrados.
-                      </td>
-                    </tr>
-                  ) : (
-                    clients.map((client) => (
-                      <tr
-                        key={client.id}
-                        className="border-b border-border last:border-0 hover:bg-secondary/50"
-                      >
-                        <td className="px-4 py-3">
-                          <p className="text-sm font-medium text-foreground">{client.full_name}</p>
-                          <p className="text-xs text-muted-foreground md:hidden">{client.email}</p>
-                        </td>
-                        <td className="hidden px-4 py-3 text-sm text-muted-foreground md:table-cell">
-                          {client.email}
-                        </td>
-                        <td className="hidden px-4 py-3 text-sm text-muted-foreground sm:table-cell">
-                          {client.phone}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-1 text-xs font-bold text-primary">
-                            {client.points} pts
-                          </span>
-                        </td>
-                        <td className="hidden px-4 py-3 text-center lg:table-cell">
-                          {client.daily_limit_override ? (
-                            <span className="inline-flex rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">
-                              Excedido
-                            </span>
-                          ) : (
-                            <span className="inline-flex rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700">
-                              Normal
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <Link href={`/admin/clients/${client.id}`}>
-                            <Button variant="ghost" size="sm">
-                              <Eye className="h-4 w-4" />
-                              <span className="sr-only">Ver detalle</span>
-                            </Button>
-                          </Link>
-                        </td>
+            {isLoading ? (
+              <div className="px-4 py-10 text-center text-sm text-muted-foreground">Cargando...</div>
+            ) : clients.length === 0 ? (
+              <div className="px-4 py-10 text-center text-sm text-muted-foreground">
+                No hay clientes registrados.
+              </div>
+            ) : (
+              <>
+                <div className="space-y-3 p-4 md:hidden">
+                  {clients.map((client) => (
+                    <div key={client.id} className="rounded-xl border p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">{client.full_name}</p>
+                          <p className="text-xs text-muted-foreground">{client.phone}</p>
+                          <p className="text-xs text-muted-foreground">{client.email}</p>
+                        </div>
+                        <Link href={`/admin/clients/${client.id}`}>
+                          <Button variant="ghost" size="sm">
+                            <Eye className="h-4 w-4" />
+                            <span className="sr-only">Ver detalle</span>
+                          </Button>
+                        </Link>
+                      </div>
+                      <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-muted-foreground">
+                        <div>
+                          <p className="font-medium text-foreground">{client.points} pts</p>
+                          <p>Puntos</p>
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground">
+                            {client.daily_limit_override ? "Excedido" : "Normal"}
+                          </p>
+                          <p>Limite</p>
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground">{client.gender}</p>
+                          <p>Sexo</p>
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground">{formatBirthday(client)}</p>
+                          <p>Cumpleanos</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="hidden overflow-x-auto md:block">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                          Nombre
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                          Correo
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                          Telefono
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                          Cumpleanos
+                        </th>
+                        <th className="px-4 py-3 text-center text-xs font-medium uppercase text-muted-foreground">
+                          Puntos
+                        </th>
+                        <th className="px-4 py-3 text-center text-xs font-medium uppercase text-muted-foreground">
+                          Limite
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-muted-foreground">
+                          Acciones
+                        </th>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                    </thead>
+                    <tbody>
+                      {clients.map((client) => (
+                        <tr
+                          key={client.id}
+                          className="border-b border-border last:border-0 hover:bg-secondary/50"
+                        >
+                          <td className="px-4 py-3">
+                            <p className="text-sm font-medium text-foreground">{client.full_name}</p>
+                            <p className="text-xs text-muted-foreground">{client.gender}</p>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-muted-foreground">{client.email}</td>
+                          <td className="px-4 py-3 text-sm text-muted-foreground">{client.phone}</td>
+                          <td className="px-4 py-3 text-sm text-muted-foreground">
+                            {formatBirthday(client)}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-1 text-xs font-bold text-primary">
+                              {client.points} pts
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            {client.daily_limit_override ? (
+                              <span className="inline-flex rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">
+                                Excedido
+                              </span>
+                            ) : (
+                              <span className="inline-flex rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700">
+                                Normal
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <Link href={`/admin/clients/${client.id}`}>
+                              <Button variant="ghost" size="sm">
+                                <Eye className="h-4 w-4" />
+                                <span className="sr-only">Ver detalle</span>
+                              </Button>
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>

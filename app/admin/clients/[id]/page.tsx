@@ -12,7 +12,6 @@ import {
   XCircle,
 } from "lucide-react"
 import { AdminShell } from "@/components/admin/admin-shell"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -38,6 +37,8 @@ type ClientPayload = {
     phone: string
     address: string
     gender: string
+    birthday_month?: number | null
+    birthday_day?: number | null
     points: number
     redeemed_today: number
     last_redeem_date: string | null
@@ -53,13 +54,6 @@ type ClientPayload = {
     amount: number
     points_earned: number
     created_at: string
-    imported_at?: string | null
-    source?: "manual" | "vectorpos" | null
-    source_invoice_id?: string | null
-    source_client_phone?: string | null
-    source_client_name?: string | null
-    match_status?: "matched" | "unmatched" | "duplicate" | null
-    points_applied_at?: string | null
     issued_by?: { full_name?: string; email?: string; role?: string }
   }[]
   redemptions: {
@@ -112,6 +106,8 @@ export default function ClientDetailPage() {
     phone: "",
     address: "",
     gender: "Femenino",
+    birthday_month: "",
+    birthday_day: "",
     password_plain: "",
     daily_limit_override: false,
   })
@@ -141,6 +137,14 @@ export default function ClientDetailPage() {
       phone: data.client.phone || "",
       address: data.client.address || "",
       gender: data.client.gender || "Femenino",
+      birthday_month:
+        data.client.birthday_month === null || data.client.birthday_month === undefined
+          ? ""
+          : String(data.client.birthday_month),
+      birthday_day:
+        data.client.birthday_day === null || data.client.birthday_day === undefined
+          ? ""
+          : String(data.client.birthday_day),
       password_plain: data.client.password_plain || "",
       daily_limit_override: Boolean(data.client.daily_limit_override),
     })
@@ -430,6 +434,40 @@ export default function ClientDetailPage() {
                         }
                       />
                     </div>
+
+                    <div className="space-y-1">
+                      <Label>Mes de cumpleanos</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={12}
+                        value={profileForm.birthday_month}
+                        onChange={(event) =>
+                          setProfileForm((current) => ({
+                            ...current,
+                            birthday_month: event.target.value,
+                          }))
+                        }
+                        placeholder="1-12"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label>Dia de cumpleanos</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={31}
+                        value={profileForm.birthday_day}
+                        onChange={(event) =>
+                          setProfileForm((current) => ({
+                            ...current,
+                            birthday_day: event.target.value,
+                          }))
+                        }
+                        placeholder="1-31"
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-1">
@@ -671,20 +709,14 @@ export default function ClientDetailPage() {
                       <div key={invoice.id} className="rounded-lg border p-3">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="text-sm font-medium text-foreground">
-                            Factura #{invoice.source_invoice_id || invoice.invoice_number}
+                            Factura #{invoice.invoice_number}
                           </p>
-                          <Badge variant={invoice.source === "vectorpos" ? "secondary" : "outline"}>
-                            {invoice.source === "vectorpos" ? "VectorPOS" : "Manual"}
-                          </Badge>
-                          <Badge variant={invoice.points_applied_at ? "default" : "outline"}>
-                            {invoice.points_applied_at ? "Aplico puntos" : "Pendiente"}
-                          </Badge>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          {formatDate(invoice.imported_at || invoice.created_at)} | ${invoice.amount.toLocaleString("es-CO")} | +{invoice.points_earned} pts
+                          {formatDate(invoice.created_at)} | ${invoice.amount.toLocaleString("es-CO")} | +{invoice.points_earned} pts
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          Emitida por: {invoice.issued_by?.full_name || (invoice.source === "vectorpos" ? "VectorPOS" : "Sin registro")}
+                          Emitida por: {invoice.issued_by?.full_name || "Sin registro"}
                         </p>
                       </div>
                     ))
