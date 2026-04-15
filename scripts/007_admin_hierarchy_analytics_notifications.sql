@@ -30,11 +30,24 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, entity_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_admin ON audit_logs(admin_user_id, created_at DESC);
 
--- 3) Client override for daily redemption limit
+-- 3) Goals and targets per admin user
+CREATE TABLE IF NOT EXISTS admin_user_goals (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  admin_user_id UUID UNIQUE NOT NULL REFERENCES admin_users(id) ON DELETE CASCADE,
+  goal_period TEXT NOT NULL DEFAULT 'daily'
+    CHECK (goal_period IN ('daily', 'weekly', 'biweekly', 'monthly')),
+  invoice_goal INTEGER NOT NULL DEFAULT 0 CHECK (invoice_goal >= 0),
+  client_goal INTEGER NOT NULL DEFAULT 0 CHECK (client_goal >= 0),
+  redemption_goal INTEGER NOT NULL DEFAULT 0 CHECK (redemption_goal >= 0),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 4) Client override for daily redemption limit (legacy field)
 ALTER TABLE clients
   ADD COLUMN IF NOT EXISTS daily_limit_override BOOLEAN NOT NULL DEFAULT false;
 
--- 4) Traceability in invoices and redemptions
+-- 5) Traceability in invoices and redemptions
 ALTER TABLE invoices
   ADD COLUMN IF NOT EXISTS issued_by_admin_id UUID REFERENCES admin_users(id) ON DELETE SET NULL;
 
@@ -44,7 +57,7 @@ ALTER TABLE redemptions
 CREATE INDEX IF NOT EXISTS idx_invoices_issued_by_admin_id ON invoices(issued_by_admin_id);
 CREATE INDEX IF NOT EXISTS idx_redemptions_validated_by_admin_id ON redemptions(validated_by_admin_id);
 
--- 5) Scheduled banners + WhatsApp button type
+-- 6) Scheduled banners + WhatsApp button type
 ALTER TABLE banners
   ADD COLUMN IF NOT EXISTS button_type TEXT NOT NULL DEFAULT 'url'
     CHECK (button_type IN ('url', 'whatsapp'));
@@ -55,7 +68,7 @@ ALTER TABLE banners
 ALTER TABLE banners
   ADD COLUMN IF NOT EXISTS end_at TIMESTAMPTZ;
 
--- 6) Client notifications with scheduling
+-- 7) Client notifications with scheduling
 CREATE TABLE IF NOT EXISTS notifications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT NOT NULL,
@@ -76,12 +89,13 @@ CREATE TABLE IF NOT EXISTS notifications (
 
 CREATE INDEX IF NOT EXISTS idx_notifications_active ON notifications(is_active, created_at DESC);
 
--- 7) Enable RLS
+-- 8) Enable RLS
 ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE admin_user_goals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 
--- 8) Policies (idempotent)
+-- 9) Policies (idempotent)
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -100,10 +114,16 @@ BEGIN
 
   IF NOT EXISTS (
     SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'admin_user_goals' AND policyname = 'admin_all_admin_user_goals'
+  ) THEN
+    CREATE POLICY "admin_all_admin_user_goals" ON admin_user_goals FOR ALL USING (true) WITH CHECK (true);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
     WHERE schemaname = 'public' AND tablename = 'notifications' AND policyname = 'admin_all_notifications'
   ) THEN
     CREATE POLICY "admin_all_notifications" ON notifications FOR ALL USING (true) WITH CHECK (true);
   END IF;
 END
 $$;
-

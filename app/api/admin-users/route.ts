@@ -84,6 +84,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  const { error: goalsError } = await supabase.from("admin_user_goals").upsert(
+    {
+      admin_user_id: data.id,
+      goal_period: "daily",
+      invoice_goal: 0,
+      client_goal: 0,
+      redemption_goal: 0,
+    },
+    { onConflict: "admin_user_id" },
+  )
+
+  if (goalsError && goalsError.code !== "42P01") {
+    return NextResponse.json({ error: goalsError.message }, { status: 500 })
+  }
+
   await createAuditLog({
     entityType: "admin_user",
     entityId: data.id,

@@ -186,9 +186,9 @@ export default function AdminUsersPage() {
     <AdminShell>
       <div className="flex flex-col gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Usuarios jerárquicos</h1>
+          <h1 className="text-2xl font-bold text-foreground">Perfiles</h1>
           <p className="text-sm text-muted-foreground">
-            Gestiona accesos por rango de empresa: super admin, gerente, supervisor y caja.
+            Gestiona accesos y datos base de los perfiles administrativos del panel.
           </p>
         </div>
 
@@ -491,3 +491,4 @@ export default function AdminUsersPage() {
     </AdminShell>
   )
 }
+
