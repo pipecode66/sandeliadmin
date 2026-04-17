@@ -991,7 +991,7 @@ export function MenuWebManager() {
                     className="h-auto min-h-0 justify-start rounded-xl px-5 py-2.5"
                     onClick={openNewSectionDialog}
                   >
-                    <Plus className="mr-2 h-4 w-4" />
+                    <Plus className="mr-1 h-4 w-4" />
                     Subseccion
                   </Button>
                   <Button
