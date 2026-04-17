@@ -1015,25 +1015,6 @@ export function MenuWebManager() {
                 </CardContent>
               </Card>
 
-              <Card className="border-primary/15">
-                <CardHeader>
-                  <CardTitle>Notas para el admin</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm text-muted-foreground">
-                  <div className="rounded-2xl bg-secondary/60 p-4">
-                    <p className="font-medium text-foreground">Destacado solo manual</p>
-                    <p className="mt-1">El menu ya no debe inferir el destacado por clics. Ahora se define desde este panel.</p>
-                  </div>
-                  <div className="rounded-2xl bg-secondary/60 p-4">
-                    <p className="font-medium text-foreground">Banner y contenido</p>
-                    <p className="mt-1">El banner, las subsecciones y los productos se editan desde la misma categoria para mantener la vista previa coherente.</p>
-                  </div>
-                  <div className="rounded-2xl bg-secondary/60 p-4">
-                    <p className="font-medium text-foreground">Orden persistente</p>
-                    <p className="mt-1">Cada cambio de orden se guarda al soltar el elemento y te avisa abajo automaticamente.</p>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           </div>
         )}
