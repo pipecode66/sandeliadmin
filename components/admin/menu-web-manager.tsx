@@ -732,7 +732,7 @@ export function MenuWebManager() {
         </div>
 
         {!activeCategory ? (
-          <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+          <div className="grid gap-6">
             <div className="rounded-[2.25rem] border border-primary/20 bg-[linear-gradient(180deg,#ffffff_0%,#fcf7ff_100%)] p-4 shadow-[0_34px_90px_-60px_rgba(159,31,238,0.55)] sm:p-6">
               <div className="mb-6 flex items-center justify-between gap-3">
                 <div className="flex-1 text-center">
@@ -796,28 +796,6 @@ export function MenuWebManager() {
                   })
                 )}
               </div>
-            </div>
-
-            <div className="grid gap-6">
-              <Card className="border-primary/15">
-                <CardHeader>
-                  <CardTitle>Resumen actual</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-2xl bg-secondary/60 p-4">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Categorias</p>
-                    <p className="mt-2 text-2xl font-semibold text-foreground">{sortedCategories.length}</p>
-                  </div>
-                  <div className="rounded-2xl bg-secondary/60 p-4">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Subsecciones</p>
-                    <p className="mt-2 text-2xl font-semibold text-foreground">{sections.length}</p>
-                  </div>
-                  <div className="rounded-2xl bg-secondary/60 p-4">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Productos</p>
-                    <p className="mt-2 text-2xl font-semibold text-foreground">{products.length}</p>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           </div>
         ) : (
