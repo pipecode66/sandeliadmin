@@ -21,6 +21,14 @@ export const MENU_MISSING_TABLES_MESSAGE =
 export const MENU_MISSING_FEATURED_MESSAGE =
   "Falta el campo de destacado manual. Ejecuta scripts/015_menu_featured_manual.sql."
 
+const MENU_FAKE_BANNER_PATTERNS = [
+  "brand-board",
+  "/images/logo-sandeli",
+  "/images/logoios",
+  "/images/logo.png",
+  "/images/logo",
+] as const
+
 export function normalizeMenuIconKey(value: unknown): MenuIconKey {
   if (typeof value === "string" && MENU_ICON_SET.has(value as MenuIconKey)) {
     return value as MenuIconKey
@@ -44,6 +52,19 @@ export function parsePriceCop(value: unknown) {
 
 export function formatPriceCop(value: number) {
   return `$${new Intl.NumberFormat("es-CO").format(Math.max(0, Math.trunc(value)))}`
+}
+
+export function sanitizeMenuBannerImage(value: string | null | undefined) {
+  if (!value) return null
+
+  const normalized = value.trim().toLowerCase()
+  if (!normalized) return null
+
+  if (MENU_FAKE_BANNER_PATTERNS.some((pattern) => normalized.includes(pattern))) {
+    return null
+  }
+
+  return value
 }
 
 export function isMissingMenuTablesError(error: { code?: string } | null | undefined) {
@@ -162,7 +183,7 @@ export function buildPublicMenuCatalog(
       title: category.title,
       blurb: category.blurb || "",
       iconKey: normalizeMenuIconKey(category.icon_key),
-      bannerImageUrl: category.banner_image_url,
+      bannerImageUrl: sanitizeMenuBannerImage(category.banner_image_url),
       products: [...rootProducts, ...categorySections.flatMap((section) => section.products)],
       sections: categorySections,
       featuredProduct: featuredSource ? mapProduct(featuredSource) : null,

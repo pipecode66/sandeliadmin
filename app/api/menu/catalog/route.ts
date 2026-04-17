@@ -2,6 +2,7 @@
 import {
   isMissingMenuTablesError,
   MENU_MISSING_TABLES_MESSAGE,
+  sanitizeMenuBannerImage,
 } from "@/lib/menu-catalog"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { NextResponse } from "next/server"
@@ -28,7 +29,10 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    categories: categoriesResult.data || [],
+    categories: (categoriesResult.data || []).map((category) => ({
+      ...category,
+      banner_image_url: sanitizeMenuBannerImage(category.banner_image_url),
+    })),
     sections: sectionsResult.data || [],
     products: productsResult.data || [],
   })
