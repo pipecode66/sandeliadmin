@@ -19,7 +19,6 @@ import {
   Star,
   Trash2,
   UtensilsCrossed,
-  X,
   type LucideIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -734,27 +733,6 @@ export function MenuWebManager() {
         {!activeCategory ? (
           <div className="grid gap-6">
             <div className="mx-auto w-full max-w-[410px] rounded-[2.25rem] border border-primary/20 bg-[linear-gradient(180deg,#ffffff_0%,#fcf7ff_100%)] p-4 shadow-[0_34px_90px_-60px_rgba(159,31,238,0.55)] sm:p-6">
-              <div className="mb-6 flex items-center justify-between gap-3">
-                <div className="flex-1 text-center">
-                  <Image
-                    src="/images/logo-sandeli.png"
-                    alt="Sandeli"
-                    width={220}
-                    height={96}
-                    className="mx-auto h-auto w-[168px] sm:w-[188px]"
-                    style={{ width: "auto", height: "auto" }}
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedCategoryId(null)}
-                  className="flex h-11 w-11 items-center justify-center rounded-full border border-primary/30 text-primary transition-colors hover:bg-primary/5"
-                  aria-label="Cerrar vista"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
               <div className="space-y-3">
                 {sortedCategories.length === 0 ? (
                   <div className="rounded-[2rem] border border-dashed border-primary/30 px-5 py-10 text-center text-sm text-muted-foreground">
