@@ -971,15 +971,15 @@ export function MenuWebManager() {
               ))}
             </div>
 
-            <div className="grid content-start gap-4 xl:w-[260px] xl:justify-self-start">
+            <div className="grid content-start gap-4 xl:w-[280px] xl:justify-self-start">
               <Card className="self-start gap-4 border-primary/15 py-4">
                 <CardHeader className="px-5 pb-1">
                   <CardTitle className="text-base">Configuracion rapida</CardTitle>
                 </CardHeader>
-                <CardContent className="grid grid-cols-2 gap-2 px-5">
+                <CardContent className="grid grid-cols-2 gap-2.5 px-5">
                   <Button
                     size="sm"
-                    className="h-auto min-h-0 justify-start rounded-xl px-3 py-2.5"
+                    className="h-auto min-h-0 justify-start rounded-xl px-4 py-2.5"
                     onClick={() => openEditCategoryDialog(activeCategory)}
                   >
                     <Pencil className="mr-2 h-4 w-4" />
@@ -988,7 +988,7 @@ export function MenuWebManager() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-auto min-h-0 justify-start rounded-xl px-3 py-2.5"
+                    className="h-auto min-h-0 justify-start rounded-xl px-4 py-2.5"
                     onClick={openNewSectionDialog}
                   >
                     <Plus className="mr-2 h-4 w-4" />
@@ -997,7 +997,7 @@ export function MenuWebManager() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-auto min-h-0 justify-start rounded-xl px-3 py-2.5"
+                    className="h-auto min-h-0 justify-start rounded-xl px-4 py-2.5"
                     onClick={() => openNewProductDialog()}
                   >
                     <Plus className="mr-2 h-4 w-4" />
@@ -1006,7 +1006,7 @@ export function MenuWebManager() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-auto min-h-0 justify-start rounded-xl px-3 py-2.5"
+                    className="h-auto min-h-0 justify-start rounded-xl px-4 py-2.5"
                     onClick={() => void deleteCategory(activeCategory)}
                   >
                     <Trash2 className="mr-2 h-4 w-4 text-destructive" />
