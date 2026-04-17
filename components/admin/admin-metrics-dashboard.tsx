@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react"
 import useSWR from "swr"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
 import {
   Bar,
   BarChart,
@@ -12,9 +14,19 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
-import { BarChart3, DollarSign, FileText, Loader2, RefreshCcw, Users } from "lucide-react"
+import {
+  CalendarDays,
+  DollarSign,
+  FileText,
+  Loader2,
+  RefreshCcw,
+  Users,
+} from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import {
   Select,
   SelectContent,
@@ -22,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { cn } from "@/lib/utils"
 
 type MetricsPeriod = "daily" | "weekly" | "monthly"
 type AdminRole = "super_admin" | "gerente" | "supervisor" | "caja"
@@ -60,6 +73,7 @@ type MetricsPayload = {
       label: string
       start: string
       end: string
+      referenceDate: string
     }
     selectedUserId: string | null
     selectedUserName: string | null
@@ -101,6 +115,42 @@ function formatShortName(value: string) {
   return short.length > 18 ? parts[0] : short
 }
 
+function formatReferenceDate(date: Date, period: MetricsPeriod) {
+  if (period === "monthly") {
+    return capitalize(format(date, "LLLL yyyy", { locale: es }))
+  }
+  return capitalize(format(date, "d 'de' LLLL yyyy", { locale: es }))
+}
+
+function formatSelectedRange(startIso: string, endIso: string, period: MetricsPeriod) {
+  const start = new Date(startIso)
+  const end = new Date(endIso)
+
+  if (period === "daily") {
+    return capitalize(format(start, "d 'de' LLLL yyyy", { locale: es }))
+  }
+
+  if (period === "monthly") {
+    return capitalize(format(start, "LLLL yyyy", { locale: es }))
+  }
+
+  const sameMonth = start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()
+  if (sameMonth) {
+    return `${format(start, "d", { locale: es })} - ${format(end, "d 'de' LLLL yyyy", { locale: es })}`
+  }
+
+  return `${format(start, "d LLL", { locale: es })} - ${format(end, "d LLL yyyy", { locale: es })}`
+}
+
+function capitalize(value: string) {
+  if (!value) return value
+  return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+function toDateQueryValue(date: Date) {
+  return format(date, "yyyy-MM-dd")
+}
+
 function StatCard({
   title,
   value,
@@ -131,12 +181,17 @@ function StatCard({
 export function AdminMetricsDashboard() {
   const [period, setPeriod] = useState<MetricsPeriod>("daily")
   const [selectedUserId, setSelectedUserId] = useState<string>("all")
+  const [referenceDate, setReferenceDate] = useState<Date>(new Date())
+  const [calendarOpen, setCalendarOpen] = useState(false)
 
   const query = useMemo(() => {
-    const params = new URLSearchParams({ period })
+    const params = new URLSearchParams({
+      period,
+      reference_date: toDateQueryValue(referenceDate),
+    })
     params.set("user_id", selectedUserId)
     return `/api/admin-users/stats?${params.toString()}`
-  }, [period, selectedUserId])
+  }, [period, referenceDate, selectedUserId])
 
   const { data, error, isLoading } = useSWR<MetricsPayload>(query, fetcher, {
     refreshInterval: 30000,
@@ -157,6 +212,23 @@ export function AdminMetricsDashboard() {
     if (!data?.analytics.selectedUserId) return null
     return data.analytics.users.find((user) => user.id === data.analytics.selectedUserId) || null
   }, [data?.analytics.selectedUserId, data?.analytics.users])
+
+  const selectedRangeLabel = useMemo(() => {
+    if (!data?.analytics.selectedPeriod) {
+      return formatReferenceDate(referenceDate, period)
+    }
+
+    return formatSelectedRange(
+      data.analytics.selectedPeriod.start,
+      data.analytics.selectedPeriod.end,
+      data.analytics.selectedPeriod.key,
+    )
+  }, [data?.analytics.selectedPeriod, period, referenceDate])
+
+  const buttonDateLabel = useMemo(
+    () => formatReferenceDate(referenceDate, period),
+    [period, referenceDate],
+  )
 
   if (isLoading) {
     return (
@@ -187,18 +259,18 @@ export function AdminMetricsDashboard() {
             <p className="text-sm font-semibold text-foreground">Filtro de rendimiento</p>
             <p className="text-sm text-muted-foreground">
               {selectedWorker
-                ? `Mostrando el rendimiento de ${selectedWorker.fullName} en ${data.analytics.selectedPeriod.label.toLowerCase()}.`
-                : `Mostrando el consolidado del equipo en ${data.analytics.selectedPeriod.label.toLowerCase()}.`}
+                ? `Mostrando el rendimiento de ${selectedWorker.fullName} para ${selectedRangeLabel}.`
+                : `Mostrando el consolidado del equipo para ${selectedRangeLabel}.`}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="space-y-1">
               <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Periodo
               </label>
               <Select value={period} onValueChange={(value) => setPeriod(value as MetricsPeriod)}>
-                <SelectTrigger className="min-w-[180px]">
+                <SelectTrigger className="min-w-[160px]">
                   <SelectValue placeholder="Selecciona el periodo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -209,6 +281,41 @@ export function AdminMetricsDashboard() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Fecha de referencia
+              </label>
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="min-w-[220px] justify-between font-normal"
+                  >
+                    <span className="flex items-center gap-2">
+                      <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                      {buttonDateLabel}
+                    </span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={referenceDate}
+                    onSelect={(date) => {
+                      if (!date) return
+                      setReferenceDate(date)
+                      setCalendarOpen(false)
+                    }}
+                    captionLayout="dropdown"
+                    fromYear={2020}
+                    toYear={new Date().getFullYear() + 1}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="space-y-1">

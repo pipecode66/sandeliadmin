@@ -9,6 +9,7 @@ import {
   METRICS_PERIOD_OPTIONS,
   MetricsPeriod,
   normalizeMetricsPeriod,
+  parseMetricsReferenceDate,
 } from "@/lib/admin-user-metrics"
 import { createAdminClient } from "@/lib/supabase/admin"
 
@@ -33,12 +34,14 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const period = searchParams.get("period")
   const selectedUserIdParam = searchParams.get("user_id")
+  const referenceDateParam = searchParams.get("reference_date")
   const result = await getAdminUserMetricsWithOptions({
     analyticsPeriod: isValidMetricsPeriod(period) ? period : normalizeMetricsPeriod(period),
     selectedUserId:
       typeof selectedUserIdParam === "string" && selectedUserIdParam !== "all"
         ? selectedUserIdParam
         : null,
+    referenceDate: parseMetricsReferenceDate(referenceDateParam),
   })
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: result.status || 500 })

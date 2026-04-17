@@ -99,6 +99,7 @@ export type AdminUserMetricsResponse = {
       label: string
       start: string
       end: string
+      referenceDate: string
     }
     selectedUserId: string | null
     selectedUserName: string | null
@@ -129,6 +130,18 @@ function normalizeGoalPeriod(value: unknown): GoalPeriod {
 export function normalizeMetricsPeriod(value: unknown): MetricsPeriod {
   if (value === "weekly" || value === "monthly") return value
   return "daily"
+}
+
+export function parseMetricsReferenceDate(value: unknown) {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null
+  const [yearText, monthText, dayText] = value.split("-")
+  const year = Number(yearText)
+  const month = Number(monthText)
+  const day = Number(dayText)
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) return null
+  const parsed = new Date(year, month - 1, day, 12, 0, 0, 0)
+  if (Number.isNaN(parsed.getTime())) return null
+  return parsed
 }
 
 function getDefaultGoals(): AdminUserGoalConfig {
@@ -182,12 +195,30 @@ function getPeriodWindow(period: GoalPeriod, now = new Date()) {
 }
 
 function getMetricsPeriodWindow(period: MetricsPeriod, now = new Date()) {
-  const base = getPeriodWindow(period, now)
+  const referenceDate = new Date(now)
+  const start = new Date(referenceDate)
+  const end = new Date(referenceDate)
+  start.setHours(0, 0, 0, 0)
+  end.setHours(23, 59, 59, 999)
+
+  if (period === "weekly") {
+    const weekday = (start.getDay() + 6) % 7
+    start.setDate(start.getDate() - weekday)
+    end.setTime(start.getTime())
+    end.setDate(start.getDate() + 6)
+    end.setHours(23, 59, 59, 999)
+  } else if (period === "monthly") {
+    start.setDate(1)
+    end.setMonth(start.getMonth() + 1, 0)
+    end.setHours(23, 59, 59, 999)
+  }
+
   return {
     key: period,
-    label: base.label,
-    start: base.start,
-    end: base.end,
+    label: period === "weekly" ? "Semana seleccionada" : period === "monthly" ? "Mes seleccionado" : "Dia seleccionado",
+    start,
+    end,
+    referenceDate,
   }
 }
 
@@ -206,12 +237,13 @@ export async function getAdminUserMetrics(): Promise<
 export async function getAdminUserMetricsWithOptions(options?: {
   analyticsPeriod?: MetricsPeriod
   selectedUserId?: string | null
+  referenceDate?: Date | null
 }): Promise<
   { ok: true; data: AdminUserMetricsResponse } | { ok: false; error: string; status?: number }
 > {
   const supabase = createAdminClient()
   const analyticsPeriod = normalizeMetricsPeriod(options?.analyticsPeriod)
-  const analyticsWindow = getMetricsPeriodWindow(analyticsPeriod)
+  const analyticsWindow = getMetricsPeriodWindow(analyticsPeriod, options?.referenceDate || new Date())
   const requestedUserId = options?.selectedUserId?.trim() || null
 
   const [usersResult, goalsResult, invoicesResult, redemptionsResult, clientsAuditResult] =
@@ -398,6 +430,7 @@ export async function getAdminUserMetricsWithOptions(options?: {
           label: analyticsWindow.label,
           start: analyticsWindow.start.toISOString(),
           end: analyticsWindow.end.toISOString(),
+          referenceDate: analyticsWindow.referenceDate.toISOString(),
         },
         selectedUserId: effectiveSelectedUserId,
         selectedUserName:
