@@ -192,7 +192,7 @@ function PreviewMedia({
     <div
       className={cn(
         "relative overflow-hidden rounded-[1.75rem] border border-primary/15 bg-[linear-gradient(180deg,#fbf5ff_0%,#f4ebff_100%)]",
-        ratio === "banner" ? "aspect-[1.65/1] min-h-[210px]" : "aspect-square",
+        ratio === "banner" ? "aspect-[1.6/1] min-h-[180px]" : "aspect-square",
         className,
       )}
     >
@@ -733,7 +733,7 @@ export function MenuWebManager() {
 
         {!activeCategory ? (
           <div className="grid gap-6">
-            <div className="rounded-[2.25rem] border border-primary/20 bg-[linear-gradient(180deg,#ffffff_0%,#fcf7ff_100%)] p-4 shadow-[0_34px_90px_-60px_rgba(159,31,238,0.55)] sm:p-6">
+            <div className="mx-auto w-full max-w-[410px] rounded-[2.25rem] border border-primary/20 bg-[linear-gradient(180deg,#ffffff_0%,#fcf7ff_100%)] p-4 shadow-[0_34px_90px_-60px_rgba(159,31,238,0.55)] sm:p-6">
               <div className="mb-6 flex items-center justify-between gap-3">
                 <div className="flex-1 text-center">
                   <Image
@@ -741,7 +741,7 @@ export function MenuWebManager() {
                     alt="Sandeli"
                     width={220}
                     height={96}
-                    className="mx-auto h-auto w-auto"
+                    className="mx-auto h-auto w-[168px] sm:w-[188px]"
                     style={{ width: "auto", height: "auto" }}
                   />
                 </div>
@@ -799,8 +799,8 @@ export function MenuWebManager() {
             </div>
           </div>
         ) : (
-          <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
-            <div className="space-y-6">
+          <div className="grid gap-6 xl:grid-cols-[430px_minmax(0,1fr)]">
+            <div className="mx-auto w-full max-w-[430px] space-y-6 xl:mx-0">
               <div className="rounded-[2.25rem] border border-primary/20 bg-[linear-gradient(180deg,#ffffff_0%,#fcf7ff_100%)] p-4 shadow-[0_34px_90px_-60px_rgba(159,31,238,0.55)] sm:p-6">
                 <div className="mb-4 flex flex-wrap items-center gap-2">
                   <Button variant="outline" className="rounded-full border-primary/25 text-primary" onClick={() => setSelectedCategoryId(null)}>
@@ -823,7 +823,7 @@ export function MenuWebManager() {
 
                 <PreviewMedia src={activeCategory.banner_image_url} alt={activeCategory.title} ratio="banner" />
                 <div className="mt-5 text-center">
-                  <p className="text-3xl font-semibold text-primary">{activeCategory.title}</p>
+                  <p className="text-2xl font-semibold text-primary sm:text-3xl">{activeCategory.title}</p>
                   <p className="mt-2 text-sm text-muted-foreground">{activeCategory.blurb || "Sin descripcion breve todavia."}</p>
                 </div>
               </div>
