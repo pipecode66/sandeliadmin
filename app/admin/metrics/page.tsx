@@ -1,7 +1,7 @@
 "use client"
 
 import { AdminShell } from "@/components/admin/admin-shell"
-import { AdminUserStatsBoard } from "@/components/admin/admin-user-stats-board"
+import { AdminMetricsDashboard } from "@/components/admin/admin-metrics-dashboard"
 
 export default function AdminMetricsPage() {
   return (
@@ -10,11 +10,11 @@ export default function AdminMetricsPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Metricas</h1>
           <p className="text-sm text-muted-foreground">
-            Revisa tus estadisticas y compara el rendimiento del equipo por facturas, clientes y codigos validados.
+            Filtra por dia, semana o mes para revisar cuanto factura el equipo, cuantos clientes registra y cuantas redenciones valida cada trabajador.
           </p>
         </div>
 
-        <AdminUserStatsBoard editableGoals={false} showOwnSpotlight />
+        <AdminMetricsDashboard />
       </div>
     </AdminShell>
   )

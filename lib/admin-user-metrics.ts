@@ -2,8 +2,10 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { normalizeRole } from "@/lib/admin-roles"
 
 export const GOAL_PERIOD_OPTIONS = ["daily", "weekly", "biweekly", "monthly"] as const
+export const METRICS_PERIOD_OPTIONS = ["daily", "weekly", "monthly"] as const
 
 export type GoalPeriod = (typeof GOAL_PERIOD_OPTIONS)[number]
+export type MetricsPeriod = (typeof METRICS_PERIOD_OPTIONS)[number]
 
 type AdminUserRow = {
   id: string
@@ -26,6 +28,7 @@ type GoalRow = {
 type InvoiceRow = {
   issued_by_admin_id: string | null
   created_at: string | null
+  amount: number | null
 }
 
 type RedemptionRow = {
@@ -45,6 +48,13 @@ export type AdminUserGoalConfig = {
   redemptionGoal: number
 }
 
+export type AdminUserPeriodMetrics = {
+  invoices: number
+  invoiceAmount: number
+  clients: number
+  redemptions: number
+}
+
 export type AdminUserMetricsRecord = {
   id: string
   authUserId: string
@@ -60,11 +70,13 @@ export type AdminUserMetricsRecord = {
     start: string
     end: string
     invoices: number
+    invoiceAmount: number
     clients: number
     redemptions: number
   }
   totals: {
     invoices: number
+    invoiceAmount: number
     clients: number
     redemptions: number
   }
@@ -77,8 +89,28 @@ export type AdminUserMetricsResponse = {
     totalUsers: number
     activeUsers: number
     totalInvoices: number
+    totalInvoiceAmount: number
     totalClients: number
     totalRedemptions: number
+  }
+  analytics: {
+    selectedPeriod: {
+      key: MetricsPeriod
+      label: string
+      start: string
+      end: string
+    }
+    selectedUserId: string | null
+    selectedUserName: string | null
+    totals: AdminUserPeriodMetrics
+    users: Array<{
+      id: string
+      fullName: string
+      role: AdminUserMetricsRecord["role"]
+      isActive: boolean
+      period: AdminUserPeriodMetrics
+      totals: AdminUserPeriodMetrics
+    }>
   }
 }
 
@@ -91,6 +123,11 @@ function getRoleOrder(role: AdminUserMetricsRecord["role"]) {
 
 function normalizeGoalPeriod(value: unknown): GoalPeriod {
   if (value === "weekly" || value === "biweekly" || value === "monthly") return value
+  return "daily"
+}
+
+export function normalizeMetricsPeriod(value: unknown): MetricsPeriod {
+  if (value === "weekly" || value === "monthly") return value
   return "daily"
 }
 
@@ -144,6 +181,16 @@ function getPeriodWindow(period: GoalPeriod, now = new Date()) {
   }
 }
 
+function getMetricsPeriodWindow(period: MetricsPeriod, now = new Date()) {
+  const base = getPeriodWindow(period, now)
+  return {
+    key: period,
+    label: base.label,
+    start: base.start,
+    end: base.end,
+  }
+}
+
 function fallsWithin(value: string | null | undefined, start: Date, end: Date) {
   if (!value) return false
   const timestamp = new Date(value).getTime()
@@ -153,7 +200,19 @@ function fallsWithin(value: string | null | undefined, start: Date, end: Date) {
 export async function getAdminUserMetrics(): Promise<
   { ok: true; data: AdminUserMetricsResponse } | { ok: false; error: string; status?: number }
 > {
+  return getAdminUserMetricsWithOptions()
+}
+
+export async function getAdminUserMetricsWithOptions(options?: {
+  analyticsPeriod?: MetricsPeriod
+  selectedUserId?: string | null
+}): Promise<
+  { ok: true; data: AdminUserMetricsResponse } | { ok: false; error: string; status?: number }
+> {
   const supabase = createAdminClient()
+  const analyticsPeriod = normalizeMetricsPeriod(options?.analyticsPeriod)
+  const analyticsWindow = getMetricsPeriodWindow(analyticsPeriod)
+  const requestedUserId = options?.selectedUserId?.trim() || null
 
   const [usersResult, goalsResult, invoicesResult, redemptionsResult, clientsAuditResult] =
     await Promise.all([
@@ -166,7 +225,7 @@ export async function getAdminUserMetrics(): Promise<
         .select("admin_user_id, goal_period, invoice_goal, client_goal, redemption_goal"),
       supabase
         .from("invoices")
-        .select("issued_by_admin_id, created_at")
+        .select("issued_by_admin_id, created_at, amount")
         .not("issued_by_admin_id", "is", null),
       supabase
         .from("redemptions")
@@ -232,6 +291,9 @@ export async function getAdminUserMetrics(): Promise<
       const invoiceRows = invoices.filter((item) => item.issued_by_admin_id === user.id)
       const clientRows = clientCreates.filter((item) => item.admin_user_id === user.id)
       const redemptionRows = redemptions.filter((item) => item.validated_by_admin_id === user.id)
+      const currentPeriodInvoiceRows = invoiceRows.filter((item) =>
+        fallsWithin(item.created_at, period.start, period.end),
+      )
 
       return {
         id: user.id,
@@ -247,12 +309,17 @@ export async function getAdminUserMetrics(): Promise<
           label: period.label,
           start: period.start.toISOString(),
           end: period.end.toISOString(),
-          invoices: invoiceRows.filter((item) => fallsWithin(item.created_at, period.start, period.end)).length,
+          invoices: currentPeriodInvoiceRows.length,
+          invoiceAmount: currentPeriodInvoiceRows.reduce(
+            (sum, item) => sum + toSafeCount(item.amount),
+            0,
+          ),
           clients: clientRows.filter((item) => fallsWithin(item.created_at, period.start, period.end)).length,
           redemptions: redemptionRows.filter((item) => fallsWithin(item.validated_at, period.start, period.end)).length,
         },
         totals: {
           invoices: invoiceRows.length,
+          invoiceAmount: invoiceRows.reduce((sum, item) => sum + toSafeCount(item.amount), 0),
           clients: clientRows.length,
           redemptions: redemptionRows.length,
         },
@@ -265,6 +332,53 @@ export async function getAdminUserMetrics(): Promise<
       return left.fullName.localeCompare(right.fullName)
     })
 
+  const effectiveSelectedUserId =
+    requestedUserId && records.some((item) => item.id === requestedUserId) ? requestedUserId : null
+
+  const analyticsUsers = records
+    .filter((item) => !effectiveSelectedUserId || item.id === effectiveSelectedUserId)
+    .map((item) => {
+      const periodInvoiceRows = invoices.filter(
+        (invoice) =>
+          invoice.issued_by_admin_id === item.id &&
+          fallsWithin(invoice.created_at, analyticsWindow.start, analyticsWindow.end),
+      )
+      const periodClientRows = clientCreates.filter(
+        (client) =>
+          client.admin_user_id === item.id &&
+          fallsWithin(client.created_at, analyticsWindow.start, analyticsWindow.end),
+      )
+      const periodRedemptionRows = redemptions.filter(
+        (redemption) =>
+          redemption.validated_by_admin_id === item.id &&
+          fallsWithin(redemption.validated_at, analyticsWindow.start, analyticsWindow.end),
+      )
+
+      return {
+        id: item.id,
+        fullName: item.fullName,
+        role: item.role,
+        isActive: item.isActive,
+        period: {
+          invoices: periodInvoiceRows.length,
+          invoiceAmount: periodInvoiceRows.reduce((sum, row) => sum + toSafeCount(row.amount), 0),
+          clients: periodClientRows.length,
+          redemptions: periodRedemptionRows.length,
+        },
+        totals: item.totals,
+      }
+    })
+
+  const analyticsTotals = analyticsUsers.reduce<AdminUserPeriodMetrics>(
+    (sum, item) => ({
+      invoices: sum.invoices + item.period.invoices,
+      invoiceAmount: sum.invoiceAmount + item.period.invoiceAmount,
+      clients: sum.clients + item.period.clients,
+      redemptions: sum.redemptions + item.period.redemptions,
+    }),
+    { invoices: 0, invoiceAmount: 0, clients: 0, redemptions: 0 },
+  )
+
   return {
     ok: true,
     data: {
@@ -274,8 +388,22 @@ export async function getAdminUserMetrics(): Promise<
         totalUsers: records.length,
         activeUsers: records.filter((item) => item.isActive).length,
         totalInvoices: records.reduce((sum, item) => sum + item.totals.invoices, 0),
+        totalInvoiceAmount: records.reduce((sum, item) => sum + item.totals.invoiceAmount, 0),
         totalClients: records.reduce((sum, item) => sum + item.totals.clients, 0),
         totalRedemptions: records.reduce((sum, item) => sum + item.totals.redemptions, 0),
+      },
+      analytics: {
+        selectedPeriod: {
+          key: analyticsWindow.key,
+          label: analyticsWindow.label,
+          start: analyticsWindow.start.toISOString(),
+          end: analyticsWindow.end.toISOString(),
+        },
+        selectedUserId: effectiveSelectedUserId,
+        selectedUserName:
+          analyticsUsers.length === 1 ? analyticsUsers[0]?.fullName || null : null,
+        totals: analyticsTotals,
+        users: analyticsUsers,
       },
     },
   }

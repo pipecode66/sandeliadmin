@@ -5,6 +5,10 @@ import {
   GOAL_PERIOD_OPTIONS,
   GoalPeriod,
   getAdminUserMetrics,
+  getAdminUserMetricsWithOptions,
+  METRICS_PERIOD_OPTIONS,
+  MetricsPeriod,
+  normalizeMetricsPeriod,
 } from "@/lib/admin-user-metrics"
 import { createAdminClient } from "@/lib/supabase/admin"
 
@@ -18,11 +22,24 @@ function parseGoalValue(value: unknown) {
   return Math.trunc(parsed)
 }
 
-export async function GET() {
+function isValidMetricsPeriod(value: unknown): value is MetricsPeriod {
+  return typeof value === "string" && METRICS_PERIOD_OPTIONS.includes(value as MetricsPeriod)
+}
+
+export async function GET(request: Request) {
   const admin = await requireAdmin("caja")
   if (!admin.ok) return admin.response
 
-  const result = await getAdminUserMetrics()
+  const { searchParams } = new URL(request.url)
+  const period = searchParams.get("period")
+  const selectedUserIdParam = searchParams.get("user_id")
+  const result = await getAdminUserMetricsWithOptions({
+    analyticsPeriod: isValidMetricsPeriod(period) ? period : normalizeMetricsPeriod(period),
+    selectedUserId:
+      typeof selectedUserIdParam === "string" && selectedUserIdParam !== "all"
+        ? selectedUserIdParam
+        : null,
+  })
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: result.status || 500 })
   }
