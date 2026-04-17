@@ -1017,26 +1017,6 @@ export function MenuWebManager() {
 
               <Card className="border-primary/15">
                 <CardHeader>
-                  <CardTitle>Estado de la categoria</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-                  <div className="rounded-2xl bg-secondary/60 p-4">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Subsecciones</p>
-                    <p className="mt-2 text-2xl font-semibold text-foreground">{activeSections.length}</p>
-                  </div>
-                  <div className="rounded-2xl bg-secondary/60 p-4">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Productos</p>
-                    <p className="mt-2 text-2xl font-semibold text-foreground">{activeProducts.length}</p>
-                  </div>
-                  <div className="rounded-2xl bg-secondary/60 p-4">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Destacado manual</p>
-                    <p className="mt-2 text-base font-semibold text-foreground">{featuredProduct ? featuredProduct.title : "Sin definir"}</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-primary/15">
-                <CardHeader>
                   <CardTitle>Notas para el admin</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm text-muted-foreground">
