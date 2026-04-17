@@ -777,7 +777,7 @@ export function MenuWebManager() {
             </div>
           </div>
         ) : (
-          <div className="grid gap-6 xl:grid-cols-[430px_minmax(0,1fr)]">
+          <div className="grid gap-6 xl:grid-cols-[430px_320px]">
             <div className="mx-auto w-full max-w-[430px] space-y-6 xl:mx-0">
               <div className="rounded-[2.25rem] border border-primary/20 bg-[linear-gradient(180deg,#ffffff_0%,#fcf7ff_100%)] p-4 shadow-[0_34px_90px_-60px_rgba(159,31,238,0.55)] sm:p-6">
                 <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -971,27 +971,46 @@ export function MenuWebManager() {
               ))}
             </div>
 
-            <div className="grid gap-6">
+            <div className="grid gap-4 xl:max-w-[320px]">
               <Card className="border-primary/15">
-                <CardHeader>
-                  <CardTitle>Configuracion rapida</CardTitle>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Configuracion rapida</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <Button className="w-full justify-start" onClick={() => openEditCategoryDialog(activeCategory)}>
+                <CardContent className="grid grid-cols-2 gap-2">
+                  <Button
+                    size="sm"
+                    className="h-auto min-h-0 justify-start rounded-xl px-3 py-2.5"
+                    onClick={() => openEditCategoryDialog(activeCategory)}
+                  >
                     <Pencil className="mr-2 h-4 w-4" />
-                    Editar categoria y banner
+                    Editar
                   </Button>
-                  <Button variant="outline" className="w-full justify-start" onClick={openNewSectionDialog}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-auto min-h-0 justify-start rounded-xl px-3 py-2.5"
+                    onClick={openNewSectionDialog}
+                  >
                     <Plus className="mr-2 h-4 w-4" />
-                    Crear subseccion
+                    Subseccion
                   </Button>
-                  <Button variant="outline" className="w-full justify-start" onClick={() => openNewProductDialog()}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-auto min-h-0 justify-start rounded-xl px-3 py-2.5"
+                    onClick={() => openNewProductDialog()}
+                  >
                     <Plus className="mr-2 h-4 w-4" />
-                    Crear producto
+                    Producto
                   </Button>
-                  <Button variant="outline" className="w-full justify-start" onClick={() => void deleteCategory(activeCategory)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-auto min-h-0 justify-start rounded-xl px-3 py-2.5"
+                    onClick={() => void deleteCategory(activeCategory)}
+                  >
                     <Trash2 className="mr-2 h-4 w-4 text-destructive" />
-                    Eliminar categoria
+                    Eliminar
                   </Button>
                 </CardContent>
               </Card>
