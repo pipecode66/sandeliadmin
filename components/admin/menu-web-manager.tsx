@@ -971,12 +971,12 @@ export function MenuWebManager() {
               ))}
             </div>
 
-            <div className="grid gap-4 xl:w-[260px] xl:justify-self-start">
-              <Card className="border-primary/15">
-                <CardHeader className="pb-3">
+            <div className="grid content-start gap-4 xl:w-[260px] xl:justify-self-start">
+              <Card className="self-start gap-4 border-primary/15 py-4">
+                <CardHeader className="px-5 pb-1">
                   <CardTitle className="text-base">Configuracion rapida</CardTitle>
                 </CardHeader>
-                <CardContent className="grid grid-cols-2 gap-2">
+                <CardContent className="grid grid-cols-2 gap-2 px-5">
                   <Button
                     size="sm"
                     className="h-auto min-h-0 justify-start rounded-xl px-3 py-2.5"
