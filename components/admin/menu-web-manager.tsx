@@ -801,26 +801,6 @@ export function MenuWebManager() {
             <div className="grid gap-6">
               <Card className="border-primary/15">
                 <CardHeader>
-                  <CardTitle>Como funciona esta vista</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4 text-sm text-muted-foreground">
-                  <div className="rounded-2xl bg-secondary/60 p-4">
-                    <p className="font-medium text-foreground">1. Orden visual real</p>
-                    <p className="mt-1">Arrastra cualquier categoria y suelta para guardar el orden definitivo.</p>
-                  </div>
-                  <div className="rounded-2xl bg-secondary/60 p-4">
-                    <p className="font-medium text-foreground">2. Edicion contextual</p>
-                    <p className="mt-1">Al abrir una categoria veras su banner, subsecciones, destacado y productos en una sola vista.</p>
-                  </div>
-                  <div className="rounded-2xl bg-secondary/60 p-4">
-                    <p className="font-medium text-foreground">3. Notificaciones push</p>
-                    <p className="mt-1">Cada accion se confirma abajo y se oculta sola a los 5 segundos.</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-primary/15">
-                <CardHeader>
                   <CardTitle>Resumen actual</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-3 sm:grid-cols-3">
