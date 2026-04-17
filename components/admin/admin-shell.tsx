@@ -6,7 +6,6 @@ import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import useSWR from "swr"
 import {
-  BarChart3,
   Bell,
   BookOpen,
   ChevronDown,
@@ -62,9 +61,9 @@ const navItems: NavItem[] = [
     children: [
       { href: "/admin/users", label: "Perfiles" },
       { href: "/admin/users/stats", label: "Estadisticas" },
+      { href: "/admin/metrics", label: "Metricas" },
     ],
   },
-  { type: "link", href: "/admin/metrics", label: "Metricas", icon: BarChart3 },
 ]
 
 const roleLabel: Record<string, string> = {
@@ -84,7 +83,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [usersMenuOpen, setUsersMenuOpen] = useState(pathname.startsWith("/admin/users"))
+  const [usersMenuOpen, setUsersMenuOpen] = useState(
+    pathname.startsWith("/admin/users") || pathname.startsWith("/admin/metrics"),
+  )
 
   const { data } = useSWR<{ admin?: { full_name?: string; role?: string } }>(
     "/api/auth/admin/me",
@@ -102,7 +103,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
     for (const item of navItems) {
       if (item.type === "link") {
-        if (item.href === "/admin/metrics" && resolvedRole === "super_admin") continue
         if (canAccessAdminPath(role, item.href)) {
           result.push(item)
         }
@@ -133,7 +133,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   }, [adminName])
 
   useEffect(() => {
-    if (pathname.startsWith("/admin/users")) {
+    if (pathname.startsWith("/admin/users") || pathname.startsWith("/admin/metrics")) {
       setUsersMenuOpen(true)
     }
   }, [pathname])

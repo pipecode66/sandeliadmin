@@ -23,7 +23,7 @@ export function canAccessAdminPath(role: AdminRole, pathname: string) {
   }
 
   if (matchesAdminPath(pathname, "/admin/metrics")) {
-    return role !== "super_admin"
+    return true
   }
 
   if (pathname === "/admin") {
