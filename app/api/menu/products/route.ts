@@ -1,7 +1,10 @@
 ﻿import { requireAdmin } from "@/lib/auth"
 import { createAuditLog } from "@/lib/audit-log"
+import { setFeaturedMenuProduct } from "@/lib/menu-admin"
 import {
+  isMissingMenuFeaturedColumnError,
   isMissingMenuTablesError,
+  MENU_MISSING_FEATURED_MESSAGE,
   MENU_MISSING_TABLES_MESSAGE,
   parsePriceCop,
   parseSortOrder,
@@ -66,6 +69,9 @@ export async function GET(request: Request) {
     if (isMissingMenuTablesError(error)) {
       return NextResponse.json({ error: MENU_MISSING_TABLES_MESSAGE }, { status: 500 })
     }
+    if (isMissingMenuFeaturedColumnError(error)) {
+      return NextResponse.json({ error: MENU_MISSING_FEATURED_MESSAGE }, { status: 500 })
+    }
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
@@ -106,6 +112,7 @@ export async function POST(request: Request) {
       price_cop: priceCop,
       image_url:
         typeof body.image_url === "string" && body.image_url.trim() ? body.image_url.trim() : null,
+      is_featured: false,
       sort_order: parseSortOrder(body.sort_order),
     })
     .select("*")
@@ -116,6 +123,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: MENU_MISSING_TABLES_MESSAGE }, { status: 500 })
     }
     return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  if (body.is_featured === true) {
+    const featuredResult = await setFeaturedMenuProduct(supabase, categoryId, data.id)
+    if (!featuredResult.ok) {
+      if (isMissingMenuFeaturedColumnError(featuredResult.error)) {
+        return NextResponse.json({ error: MENU_MISSING_FEATURED_MESSAGE }, { status: 500 })
+      }
+      return NextResponse.json({ error: featuredResult.error.message }, { status: 500 })
+    }
+    if (featuredResult.data) {
+      Object.assign(data, featuredResult.data)
+    }
   }
 
   await createAuditLog({

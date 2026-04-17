@@ -18,6 +18,8 @@ const MENU_ICON_SET = new Set<MenuIconKey>(MENU_ICON_OPTIONS.map((option) => opt
 
 export const MENU_MISSING_TABLES_MESSAGE =
   "Tablas del menú no encontradas. Ejecuta scripts/010_menu_catalog.sql."
+export const MENU_MISSING_FEATURED_MESSAGE =
+  "Falta el campo de destacado manual. Ejecuta scripts/015_menu_featured_manual.sql."
 
 export function normalizeMenuIconKey(value: unknown): MenuIconKey {
   if (typeof value === "string" && MENU_ICON_SET.has(value as MenuIconKey)) {
@@ -48,6 +50,12 @@ export function isMissingMenuTablesError(error: { code?: string } | null | undef
   return error?.code === "42P01"
 }
 
+export function isMissingMenuFeaturedColumnError(
+  error: { code?: string; message?: string } | null | undefined,
+) {
+  return error?.code === "42703" || error?.message?.includes("is_featured") === true
+}
+
 type MenuCategoryRow = {
   id: string
   title: string
@@ -72,6 +80,7 @@ type MenuProductRow = {
   description: string | null
   price_cop: number
   image_url: string | null
+  is_featured?: boolean | null
   sort_order: number | null
 }
 
@@ -80,6 +89,16 @@ export function buildPublicMenuCatalog(
   sections: MenuSectionRow[],
   products: MenuProductRow[],
 ) {
+  const compareProducts = (left: MenuProductRow, right: MenuProductRow) => {
+    const featuredDiff = Number(Boolean(right.is_featured)) - Number(Boolean(left.is_featured))
+    if (featuredDiff !== 0) return featuredDiff
+
+    const orderDiff = (left.sort_order || 0) - (right.sort_order || 0)
+    if (orderDiff !== 0) return orderDiff
+
+    return left.title.localeCompare(right.title)
+  }
+
   const productsBySection = new Map<string, MenuProductRow[]>()
   const rootProductsByCategory = new Map<string, MenuProductRow[]>()
 
@@ -113,6 +132,7 @@ export function buildPublicMenuCatalog(
     priceAmount: product.price_cop,
     imageSrc: product.image_url,
     imageAlt: `Imagen de ${product.title}`,
+    isFeatured: Boolean(product.is_featured),
   })
 
   return categories.map((category) => {
@@ -126,21 +146,16 @@ export function buildPublicMenuCatalog(
         id: section.id,
         title: section.title,
         products: (productsBySection.get(section.id) || [])
-          .sort((left, right) => {
-            const orderDiff = (left.sort_order || 0) - (right.sort_order || 0)
-            if (orderDiff !== 0) return orderDiff
-            return left.title.localeCompare(right.title)
-          })
+          .sort(compareProducts)
           .map(mapProduct),
       }))
 
     const rootProducts = (rootProductsByCategory.get(category.id) || [])
-      .sort((left, right) => {
-        const orderDiff = (left.sort_order || 0) - (right.sort_order || 0)
-        if (orderDiff !== 0) return orderDiff
-        return left.title.localeCompare(right.title)
-      })
+      .sort(compareProducts)
       .map(mapProduct)
+
+    const featuredSource =
+      products.find((product) => product.category_id === category.id && product.is_featured) || null
 
     return {
       id: category.id,
@@ -150,6 +165,7 @@ export function buildPublicMenuCatalog(
       bannerImageUrl: category.banner_image_url,
       products: [...rootProducts, ...categorySections.flatMap((section) => section.products)],
       sections: categorySections,
+      featuredProduct: featuredSource ? mapProduct(featuredSource) : null,
     }
   })
 }

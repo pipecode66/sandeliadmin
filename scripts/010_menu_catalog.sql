@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS menu_products (
   description TEXT NOT NULL DEFAULT '',
   price_cop INTEGER NOT NULL CHECK (price_cop >= 0),
   image_url TEXT,
+  is_featured BOOLEAN NOT NULL DEFAULT false,
   sort_order INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -35,6 +36,9 @@ CREATE INDEX IF NOT EXISTS idx_menu_categories_order ON menu_categories(sort_ord
 CREATE INDEX IF NOT EXISTS idx_menu_sections_category ON menu_sections(category_id, sort_order, title);
 CREATE INDEX IF NOT EXISTS idx_menu_products_category ON menu_products(category_id, sort_order, title);
 CREATE INDEX IF NOT EXISTS idx_menu_products_section ON menu_products(section_id, sort_order, title);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_menu_products_single_featured
+  ON menu_products(category_id)
+  WHERE is_featured = true;
 
 ALTER TABLE menu_categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE menu_sections ENABLE ROW LEVEL SECURITY;

@@ -1,7 +1,10 @@
 ﻿import { requireAdmin } from "@/lib/auth"
 import { createAuditLog } from "@/lib/audit-log"
+import { setFeaturedMenuProduct } from "@/lib/menu-admin"
 import {
+  isMissingMenuFeaturedColumnError,
   isMissingMenuTablesError,
+  MENU_MISSING_FEATURED_MESSAGE,
   MENU_MISSING_TABLES_MESSAGE,
   parsePriceCop,
   parseSortOrder,
@@ -70,6 +73,9 @@ export async function PATCH(
     if (isMissingMenuTablesError(currentError)) {
       return NextResponse.json({ error: MENU_MISSING_TABLES_MESSAGE }, { status: 500 })
     }
+    if (isMissingMenuFeaturedColumnError(currentError)) {
+      return NextResponse.json({ error: MENU_MISSING_FEATURED_MESSAGE }, { status: 500 })
+    }
     return NextResponse.json({ error: currentError.message }, { status: 500 })
   }
 
@@ -83,6 +89,8 @@ export async function PATCH(
     body.section_id !== undefined ? (body.section_id ? String(body.section_id).trim() : null) : current.section_id
   const nextPrice =
     body.price_cop !== undefined ? parsePriceCop(body.price_cop) : Number(current.price_cop)
+  const shouldFeature =
+    body.is_featured !== undefined ? Boolean(body.is_featured) : Boolean(current.is_featured)
 
   if (!nextCategoryId || nextPrice === null) {
     return NextResponse.json(
@@ -101,6 +109,7 @@ export async function PATCH(
     category_id: nextCategoryId,
     section_id: nextSectionId,
     price_cop: nextPrice,
+    is_featured: false,
   }
 
   if (typeof body.title === "string") updates.title = body.title.trim()
@@ -123,7 +132,31 @@ export async function PATCH(
     .single()
 
   if (error) {
+    if (isMissingMenuFeaturedColumnError(error)) {
+      return NextResponse.json({ error: MENU_MISSING_FEATURED_MESSAGE }, { status: 500 })
+    }
     return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  if (shouldFeature) {
+    const featuredResult = await setFeaturedMenuProduct(supabase, nextCategoryId, id)
+    if (!featuredResult.ok) {
+      if (isMissingMenuFeaturedColumnError(featuredResult.error)) {
+        return NextResponse.json({ error: MENU_MISSING_FEATURED_MESSAGE }, { status: 500 })
+      }
+      return NextResponse.json({ error: featuredResult.error.message }, { status: 500 })
+    }
+    if (featuredResult.data) {
+      Object.assign(data, featuredResult.data)
+    }
+  } else if (current.is_featured) {
+    const clearFeaturedResult = await setFeaturedMenuProduct(supabase, current.category_id, null)
+    if (!clearFeaturedResult.ok) {
+      if (isMissingMenuFeaturedColumnError(clearFeaturedResult.error)) {
+        return NextResponse.json({ error: MENU_MISSING_FEATURED_MESSAGE }, { status: 500 })
+      }
+      return NextResponse.json({ error: clearFeaturedResult.error.message }, { status: 500 })
+    }
   }
 
   await createAuditLog({
