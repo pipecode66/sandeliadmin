@@ -777,7 +777,7 @@ export function MenuWebManager() {
             </div>
           </div>
         ) : (
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_260px] xl:items-start">
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
             <div className="w-full max-w-[430px] space-y-6 xl:max-w-none">
               <div className="rounded-[2.25rem] border border-primary/20 bg-[linear-gradient(180deg,#ffffff_0%,#fcf7ff_100%)] p-4 shadow-[0_34px_90px_-60px_rgba(159,31,238,0.55)] sm:p-6">
                 <div className="mb-4 flex flex-wrap items-center gap-2">
