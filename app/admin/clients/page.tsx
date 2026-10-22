@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import useSWR from "swr"
-import { Eye, Plus, Search } from "lucide-react"
+import { Download, Eye, Plus, Search } from "lucide-react"
 import { AdminShell } from "@/components/admin/admin-shell"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -36,6 +36,29 @@ function formatBirthday(client: Client) {
 
 export default function ClientsPage() {
   const [search, setSearch] = useState("")
+  const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState("")
+
+  async function exportClients() {
+    setExporting(true)
+    setExportError("")
+    try {
+      const response = await fetch("/api/clients/export", { cache: "no-store" })
+      if (!response.ok) throw new Error("No se pudo exportar. Verifica tu sesión e intenta nuevamente.")
+      const url = URL.createObjectURL(await response.blob())
+      const link = document.createElement("a")
+      link.href = url
+      link.download = `clientes-sandeli-${new Date().toISOString().slice(0, 10)}.xlsx`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+    } catch (error) {
+      setExportError(error instanceof Error ? error.message : "No se pudo exportar.")
+    } finally {
+      setExporting(false)
+    }
+  }
   const { data, isLoading, error } = useSWR<{ clients: Client[] }>(
     `/api/clients?search=${encodeURIComponent(search)}`,
     fetcher,
@@ -54,13 +77,21 @@ export default function ClientsPage() {
               Gestiona clientes, puntos y datos clave del programa de fidelizacion.
             </p>
           </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button variant="outline" onClick={exportClients} disabled={exporting}>
+              <Download className="mr-2 h-4 w-4" />
+              {exporting ? "Exportando..." : "Exportar Excel"}
+            </Button>
           <Link href="/admin/clients/new">
             <Button className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               Nuevo cliente
             </Button>
           </Link>
+          </div>
         </div>
+
+        {exportError && <p role="alert" className="text-sm text-destructive">{exportError}</p>}
 
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
